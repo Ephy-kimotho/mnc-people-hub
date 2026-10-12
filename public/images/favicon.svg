@@ -1,0 +1,22 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Deep navy background -->
+  <rect width="32" height="32" rx="4" fill="#1A2744"/>
+
+  <!-- Building skyline silhouette: 7 bold white bars, heights forming the Manga Capital logo shape -->
+  <!-- All bars are anchored to y=29 (bottom). Bar width=2.5px, gap=1.5px -->
+
+  <!-- Bar 1 – shorter left wing -->
+  <rect x="3"    y="18" width="2.5" height="11" rx="0.5" fill="white"/>
+  <!-- Bar 2 – stepping up -->
+  <rect x="6.5"  y="15" width="2.5" height="14" rx="0.5" fill="white"/>
+  <!-- Bar 3 – rising toward tower -->
+  <rect x="10"   y="10" width="2.5" height="19" rx="0.5" fill="white"/>
+  <!-- Bar 4 – main tower (tallest) -->
+  <rect x="13.5" y="5"  width="2.5" height="24" rx="0.5" fill="white"/>
+  <!-- Bar 5 – steps down right of tower -->
+  <rect x="17"   y="12" width="2.5" height="17" rx="0.5" fill="white"/>
+  <!-- Bar 6 – medium right wing -->
+  <rect x="20.5" y="16" width="2.5" height="13" rx="0.5" fill="white"/>
+  <!-- Bar 7 – shorter far right -->
+  <rect x="24"   y="20" width="2.5" height="9"  rx="0.5" fill="white"/>
+</svg>
