@@ -4,6 +4,7 @@ import { MenuIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -55,7 +56,10 @@ export function DashboardHeader() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <Badge className="ml-auto h-7 border-brand/40 bg-brand-soft px-3 text-xs text-brand-ink">
+      <div className="ml-auto">
+        <ThemeToggle />
+      </div>
+      <Badge className="h-7 border-brand/40 bg-brand-soft px-3 text-xs text-brand-ink">
         Staff workspace
       </Badge>
     </header>

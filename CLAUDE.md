@@ -26,7 +26,7 @@ There is no test runner configured yet.
 - `app/(auth)/`: login, forgot-password and reset-password pages under a shared auth layout.
 - `app/(dashboard)/`: overview, leaves, submit-leave, staff and locations pages under a shared dashboard layout.
 - Most route files are still empty stubs. Both group layouts must accept and render `children` when they are built out.
-- `app/layout.tsx` sets the fonts as CSS variables (`--font-sans` Space Grotesk, `--font-heading` DM Sans, `--font-mono` Geist Mono) and wraps the app in `ThemeProvider` (next-themes, defaults to light here; pressing `d` toggles dark mode).
+- `app/layout.tsx` sets the fonts as CSS variables (`--font-sans` Space Grotesk, `--font-heading` DM Sans, `--font-mono` Geist Mono) and wraps the app in `ThemeProvider` (next-themes, follows the system theme by default; the header `ThemeToggle` and pressing `d` switch between light and dark).
 - Theme tokens (oklch CSS variables for light and `.dark`) live in `app/globals.css`. Use the semantic Tailwind classes (`bg-primary`, `text-muted-foreground`, etc.) rather than raw colors.
 - shadcn uses the `radix-nova` style with the unified `radix-ui` package and `lucide-react` icons. Path alias `@/*` maps to the repo root.
 - `cn` in `lib/utils.ts` is re-exported from the `cn` npm package, not the usual clsx + tailwind-merge helper.
