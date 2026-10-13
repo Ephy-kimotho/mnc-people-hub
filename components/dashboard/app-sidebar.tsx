@@ -18,15 +18,24 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Eyebrow } from "@/components/dashboard/eyebrow"
-import { isActivePath, navItems } from "@/components/dashboard/nav-items"
+import {
+  canSeeNavItem,
+  isActivePath,
+  navItems,
+} from "@/components/dashboard/nav-items"
+import { useAuth } from "@/providers/auth-provider"
 
 export function AppSidebar() {
   const pathname = usePathname()
   const { setOpenMobile } = useSidebar()
+  const { user } = useAuth()
+  const visibleItems = navItems.filter((item) =>
+    canSeeNavItem(item, user?.role)
+  )
 
   return (
     <Sidebar>
-      <SidebarHeader className="items-center border-b border-sidebar-border px-6 py-6">
+      <SidebarHeader className="items-center border-b border-sidebar-border px-6 py-4">
         <Link href="/overview" onClick={() => setOpenMobile(false)}>
           <Image
             src="/images/mncpeople-logo-transparent.png"
@@ -34,7 +43,7 @@ export function AppSidebar() {
             width={877}
             height={689}
             priority
-            className="h-auto w-44 dark:invert"
+            className="h-auto w-32 dark:invert"
           />
         </Link>
       </SidebarHeader>
@@ -46,7 +55,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1.5">
-              {navItems.map((item) => {
+              {visibleItems.map((item) => {
                 const active = isActivePath(pathname, item.href)
                 return (
                   <SidebarMenuItem key={item.href}>

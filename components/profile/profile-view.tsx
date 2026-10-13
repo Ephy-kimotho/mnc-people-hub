@@ -13,7 +13,6 @@ import { useState } from "react"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { ChangePasswordDialog } from "@/components/profile/change-password-dialog"
 import { StaffAvatar } from "@/components/staff/staff-bits"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -23,17 +22,8 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { formatDate, formatDateTime } from "@/lib/format"
-import type { AuthUser } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { UserStatusBadge } from "@/components/users/user-badges"
 import { useAuth } from "@/providers/auth-provider"
-
-function getStatus(user: AuthUser) {
-  if (user.is_locked)
-    return { label: "Locked", tone: "bg-destructive/10 text-destructive" }
-  if (!user.active)
-    return { label: "Inactive", tone: "bg-muted text-muted-foreground" }
-  return { label: "Active", tone: "bg-success-soft text-success" }
-}
 
 export function ProfileView() {
   const { user } = useAuth()
@@ -43,7 +33,6 @@ export function ProfileView() {
   if (!user) return null
 
   const name = user.full_name || user.username
-  const status = getStatus(user)
   const details = [
     { icon: AtSignIcon, label: "Username", value: user.username },
     { icon: MailIcon, label: "Email", value: user.email },
@@ -79,9 +68,7 @@ export function ProfileView() {
             <CardTitle className="truncate text-lg font-semibold">
               {name}
             </CardTitle>
-            <Badge className={cn("h-6 px-2.5 text-xs", status.tone)}>
-              {status.label}
-            </Badge>
+            <UserStatusBadge user={user} className="h-6 px-2.5 text-xs" />
           </div>
         </CardHeader>
         <CardContent className="px-6 py-5">

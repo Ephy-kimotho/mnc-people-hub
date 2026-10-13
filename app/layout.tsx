@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { AuthProvider } from "@/providers/auth-provider"
 import { QueryProvider } from "@/providers/query-provider"
+import { ToastProvider } from "@/providers/toast-provider"
 
 const dmSansHeading = DM_Sans({
   subsets: ["latin"],
@@ -45,6 +46,7 @@ export default function RootLayout({
             <AuthProvider>
               <TooltipProvider>{children}</TooltipProvider>
             </AuthProvider>
+            <ToastProvider />
           </QueryProvider>
         </ThemeProvider>
       </body>

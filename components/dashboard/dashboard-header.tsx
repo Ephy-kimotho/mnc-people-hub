@@ -51,16 +51,13 @@ export function DashboardHeader() {
               <Link href="/overview">MNCPeople</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          {current && (
-            <>
-              <BreadcrumbSeparator className="hidden sm:block">
-                /
-              </BreadcrumbSeparator>
-              <BreadcrumbItem>
-                <BreadcrumbPage>{current.title}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </>
-          )}
+          <BreadcrumbSeparator className="hidden sm:block">
+            /
+          </BreadcrumbSeparator>
+          <BreadcrumbItem>
+            {/* Pages outside the nav, like the 404, fall back to "Workspace" */}
+            <BreadcrumbPage>{current?.title ?? "Workspace"}</BreadcrumbPage>
+          </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 

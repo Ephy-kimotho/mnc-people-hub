@@ -9,6 +9,13 @@ export type Location = {
 
 export type RoleName = "admin" | "manager" | "staff"
 
+export type Role = {
+  name: RoleName
+  label: string
+  description: string
+  created_at: string
+}
+
 export interface AuthUser {
   user_id: string
   username: string
@@ -17,12 +24,29 @@ export interface AuthUser {
   role: RoleName
   active: boolean
   must_change_password: boolean
-  last_login_at: string
+  last_login_at: string | null
   failed_login_attempts: number
   locked_until: string | null
   is_locked: boolean
   created_at: string
   updated_at: string
+}
+
+// An account as listed on the admin users page
+export interface User extends AuthUser {
+  staff_id: string | null
+}
+
+export type UserStats = {
+  total_users: number
+  active_users: number
+  inactive_users: number
+  by_role: Record<RoleName, number>
+}
+
+export type UserFilters = {
+  role?: RoleName
+  active?: boolean
 }
 
 export type Staff = {

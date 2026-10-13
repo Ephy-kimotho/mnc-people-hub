@@ -66,6 +66,7 @@ const APP_ROUTES = [
   "/locations",
   "/staff",
   "/submit-leave",
+  "/users",
 ]
 
 /** Whether the path matches a real route (so a signed-out visitor belongs at login). */
