@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CircleCheckIcon, Loader2Icon } from "lucide-react"
+import { CircleCheckIcon, LinkIcon, Loader2Icon } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
@@ -16,27 +16,65 @@ import {
 } from "@/components/ui/card"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { confirmPasswordReset } from "@/lib/api/auth"
+import { getErrorMessage } from "@/lib/api/errors"
 import {
   PASSWORD_MIN,
   resetPasswordSchema,
   type ResetPasswordValues,
 } from "@/lib/schemas/auth"
-import { delay } from "@/lib/utils"
 
-export function ResetPasswordForm() {
+// `token` comes from the link in the reset email
+export function ResetPasswordForm({ token }: { token?: string }) {
   const [done, setDone] = useState(false)
   const form = useForm<ResetPasswordValues>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: { password: "", confirmPassword: "" },
   })
 
-  // Simulates saving the new password
-  async function onSubmit() {
-    await delay(1500)
-    setDone(true)
+  async function onSubmit({ password }: ResetPasswordValues) {
+    if (!token) return
+    try {
+      await confirmPasswordReset(token, password)
+      setDone(true)
+    } catch (error) {
+      form.setError("root", {
+        message: getErrorMessage(
+          error,
+          "Couldn't reset your password. Try again."
+        ),
+      })
+    }
   }
 
   const submitting = form.formState.isSubmitting
+  const rootError = form.formState.errors.root
+
+  if (!token) {
+    return (
+      <div className="w-full max-w-md">
+        <Card className="gap-6 rounded-2xl py-8 shadow-xl shadow-foreground/5">
+          <CardHeader className="justify-items-center px-6 text-center sm:px-8">
+            <div className="mb-2 flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <LinkIcon className="size-6" />
+            </div>
+            <CardTitle className="text-2xl font-semibold">
+              <h1>Invalid reset link</h1>
+            </CardTitle>
+            <CardDescription>
+              This link is missing its reset code. Request a new one and open
+              the link from the email.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-6 sm:px-8">
+            <Button asChild className="h-12 w-full rounded-xl">
+              <Link href="/forgot-password">Request a new link</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   if (done) {
     return (
@@ -123,6 +161,8 @@ export function ResetPasswordForm() {
                 </Field>
               )}
             />
+
+            <FieldError errors={[rootError]} />
 
             <Button
               type="submit"

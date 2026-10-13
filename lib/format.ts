@@ -19,6 +19,11 @@ export function formatDateRange(start: DateInput, end: DateInput) {
   return `${format(from, startPattern)} – ${formatDate(to)}`
 }
 
+// "Apr 6, 2026 · 2:30 PM"
+export function formatDateTime(date: DateInput) {
+  return format(toDate(date), "MMM d, yyyy · h:mm a")
+}
+
 // "2026-04-06"; the storage format used by forms and records
 export function formatISODate(date: Date) {
   return format(date, "yyyy-MM-dd")

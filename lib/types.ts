@@ -7,6 +7,24 @@ export type Location = {
   name: string
 }
 
+export type RoleName = "admin" | "manager" | "staff"
+
+export interface AuthUser {
+  user_id: string
+  username: string
+  email: string
+  full_name: string
+  role: RoleName
+  active: boolean
+  must_change_password: boolean
+  last_login_at: string
+  failed_login_attempts: number
+  locked_until: string | null
+  is_locked: boolean
+  created_at: string
+  updated_at: string
+}
+
 export type Staff = {
   id: string
   name: string

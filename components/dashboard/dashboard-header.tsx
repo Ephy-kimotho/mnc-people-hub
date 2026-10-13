@@ -15,12 +15,21 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { useSidebar } from "@/components/ui/sidebar"
-import { isActivePath, navItems } from "@/components/dashboard/nav-items"
+import {
+  accountItems,
+  isActivePath,
+  navItems,
+} from "@/components/dashboard/nav-items"
+import { UserMenu } from "@/components/dashboard/user-menu"
+import { useAuth } from "@/providers/auth-provider"
 
 export function DashboardHeader() {
   const pathname = usePathname()
   const { toggleSidebar } = useSidebar()
-  const current = navItems.find((item) => isActivePath(pathname, item.href))
+  const { user } = useAuth()
+  const current = [...navItems, ...accountItems].find((item) =>
+    isActivePath(pathname, item.href)
+  )
 
   return (
     <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur md:px-8 lg:px-12">
@@ -58,9 +67,10 @@ export function DashboardHeader() {
       <div className="ml-auto">
         <ThemeToggle />
       </div>
-      <Badge className="h-7 border-brand/40 bg-brand-soft px-3 text-xs text-brand-ink">
-        Staff workspace
+      <Badge className="hidden h-7 border-brand/40 bg-brand-soft px-3 text-xs text-brand-ink capitalize sm:inline-flex">
+        {user?.role ?? "staff"} workspace
       </Badge>
+      <UserMenu />
     </header>
   )
 }

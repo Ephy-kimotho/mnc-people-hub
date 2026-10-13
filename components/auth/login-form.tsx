@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2Icon } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -16,24 +15,30 @@ import {
 } from "@/components/ui/card"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { getErrorMessage } from "@/lib/api/errors"
 import { loginSchema, type LoginValues } from "@/lib/schemas/auth"
 import { useAuth } from "@/providers/auth-provider"
 
 export function LoginForm() {
-  const router = useRouter()
   const { login } = useAuth()
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { username: "", password: "" },
   })
 
-  // The simulated login ignores credentials and always succeeds
-  async function onSubmit() {
-    await login()
-    router.push("/overview")
+  // On success the auth provider redirects to the user's landing page
+  async function onSubmit(values: LoginValues) {
+    try {
+      await login(values)
+    } catch (error) {
+      form.setError("root", {
+        message: getErrorMessage(error, "Couldn't log you in. Try again."),
+      })
+    }
   }
 
   const submitting = form.formState.isSubmitting
+  const rootError = form.formState.errors.root
 
   return (
     <div className="w-full max-w-md">
@@ -52,18 +57,18 @@ export function LoginForm() {
             className="flex flex-col gap-5"
           >
             <Controller
-              name="email"
+              name="username"
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid} className="gap-2">
-                  <FieldLabel htmlFor="email">Email</FieldLabel>
+                  <FieldLabel htmlFor="username">Username</FieldLabel>
                   <Input
                     {...field}
-                    id="email"
-                    type="email"
-                    autoComplete="email"
+                    id="username"
+                    autoComplete="username"
+                    autoCapitalize="none"
                     autoFocus
-                    placeholder="you@mangacapital.com"
+                    placeholder="Enter your username"
                     aria-invalid={fieldState.invalid}
                     className="h-12 rounded-xl px-3.5"
                   />
@@ -99,6 +104,8 @@ export function LoginForm() {
                 </Field>
               )}
             />
+
+            <FieldError errors={[rootError]} />
 
             <Button
               type="submit"

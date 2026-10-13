@@ -16,11 +16,12 @@ import {
 } from "@/components/ui/card"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { requestPasswordReset } from "@/lib/api/auth"
+import { getErrorMessage } from "@/lib/api/errors"
 import {
   forgotPasswordSchema,
   type ForgotPasswordValues,
 } from "@/lib/schemas/auth"
-import { delay } from "@/lib/utils"
 
 export function ForgotPasswordForm() {
   // Holds the address the reset link was sent to, once submitted
@@ -30,13 +31,19 @@ export function ForgotPasswordForm() {
     defaultValues: { email: "" },
   })
 
-  // Simulates sending the reset email
   async function onSubmit({ email }: ForgotPasswordValues) {
-    await delay(1500)
-    setSentTo(email)
+    try {
+      await requestPasswordReset(email)
+      setSentTo(email)
+    } catch (error) {
+      form.setError("root", {
+        message: getErrorMessage(error, "Couldn't send the email. Try again."),
+      })
+    }
   }
 
   const submitting = form.formState.isSubmitting
+  const rootError = form.formState.errors.root
 
   return (
     <div className="w-full max-w-md">
@@ -95,6 +102,8 @@ export function ForgotPasswordForm() {
                     </Field>
                   )}
                 />
+
+                <FieldError errors={[rootError]} />
 
                 <Button
                   type="submit"
