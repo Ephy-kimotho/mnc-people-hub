@@ -1,11 +1,11 @@
+import type { Metadata } from "next"
+
 import { LocationsView } from "@/components/locations/locations-view"
-import { locations, staff } from "@/lib/mock-data"
+
+export const metadata: Metadata = {
+  title: "Locations",
+}
 
 export default function LocationsPage() {
-  const withCounts = locations.map((location) => ({
-    ...location,
-    staffCount: staff.filter((s) => s.locationId === location.id).length,
-  }))
-
-  return <LocationsView initialLocations={withCounts} />
+  return <LocationsView />
 }

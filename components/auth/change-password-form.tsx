@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2Icon } from "lucide-react"
 import { Controller, useForm } from "react-hook-form"
 
+import { PasswordInput } from "@/components/password-input"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -13,7 +14,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
 import { changePassword } from "@/lib/api/auth"
 import { getErrorMessage } from "@/lib/api/errors"
 import {
@@ -100,10 +100,9 @@ export function ChangePasswordForm() {
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid} className="gap-2">
                     <FieldLabel htmlFor={item.name}>{item.label}</FieldLabel>
-                    <Input
+                    <PasswordInput
                       {...field}
                       id={item.name}
-                      type="password"
                       autoComplete={item.autoComplete}
                       autoFocus={index === 0}
                       placeholder={item.placeholder}

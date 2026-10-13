@@ -1,6 +1,9 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Loader2Icon } from "lucide-react"
+import toast from "react-hot-toast"
 import { Controller, useForm } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -14,21 +17,30 @@ import {
 } from "@/components/ui/dialog"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { getErrorMessage } from "@/lib/api/errors"
 import {
+  createLocation,
+  locationsKey,
+  updateLocation,
+} from "@/lib/api/locations"
+import { staffKeys } from "@/lib/api/staff"
+import {
+  LOCATION_ADDRESS_MAX,
   LOCATION_NAME_MAX,
   locationSchema,
   type LocationValues,
 } from "@/lib/schemas/location"
-import type { Location } from "@/lib/types"
+import type { StaffLocation } from "@/lib/types"
 
 type LocationDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  // When set the dialog renames this location, otherwise it adds a new one
-  location?: Location
+  // When set the dialog edits this location, otherwise it adds a new one
+  location?: StaffLocation
   takenNames: string[]
-  onSave: (name: string) => void
 }
+
+const inputClass = "h-12 rounded-xl px-3.5"
 
 export function LocationDialog({
   open,
@@ -47,12 +59,16 @@ export function LocationDialog({
           </DialogTitle>
           <DialogDescription>
             {editing
-              ? "Rename this location everywhere it's used."
+              ? "Update this location's name and address everywhere it's used."
               : "Create a place staff can be assigned to."}
           </DialogDescription>
         </DialogHeader>
         {/* Radix unmounts the content when closed, so the form starts fresh each time */}
-        <LocationForm location={location} {...formProps} />
+        <LocationForm
+          location={location}
+          onDone={() => onOpenChange(false)}
+          {...formProps}
+        />
       </DialogContent>
     </Dialog>
   )
@@ -61,27 +77,61 @@ export function LocationDialog({
 function LocationForm({
   location,
   takenNames,
-  onSave,
-}: Pick<LocationDialogProps, "location" | "takenNames" | "onSave">) {
+  onDone,
+}: Pick<LocationDialogProps, "location" | "takenNames"> & {
+  onDone: () => void
+}) {
+  const queryClient = useQueryClient()
   const form = useForm<LocationValues>({
     resolver: zodResolver(locationSchema),
-    defaultValues: { name: location?.name ?? "" },
+    defaultValues: {
+      name: location?.name ?? "",
+      address: location?.address ?? "",
+    },
+  })
+
+  // Creates a location, or updates the one being edited. Staff rows show
+  // the location by name, so a save refreshes them too.
+  const mutation = useMutation({
+    mutationFn: (values: LocationValues) =>
+      location
+        ? updateLocation(location.location_id, values)
+        : createLocation(values),
+    onSuccess: (_data, values) => {
+      void queryClient.invalidateQueries({ queryKey: locationsKey })
+      void queryClient.invalidateQueries({ queryKey: staffKeys.all })
+      toast.success(`${values.name} has been ${location ? "updated" : "added"}`)
+      onDone()
+    },
+    onError: (error) => {
+      toast.error(
+        getErrorMessage(
+          error,
+          location
+            ? "Couldn't update this location."
+            : "Couldn't add this location."
+        )
+      )
+    },
   })
 
   // Names are compared case-insensitively so records stay consistent
-  function onSubmit({ name }: LocationValues) {
+  function onSubmit(values: LocationValues) {
     const taken = takenNames.some(
-      (taken) => taken.toLowerCase() === name.toLowerCase()
+      (taken) => taken.toLowerCase() === values.name.toLowerCase()
     )
     if (taken) {
       form.setError("name", { message: "A location with this name exists" })
       return
     }
-    onSave(name)
+    mutation.mutate(values)
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="px-6 py-5">
+    <form
+      onSubmit={form.handleSubmit(onSubmit)}
+      className="flex flex-col gap-5 px-6 py-5"
+    >
       <Controller
         name="name"
         control={form.control}
@@ -96,8 +146,9 @@ function LocationForm({
               autoFocus
               autoComplete="off"
               maxLength={LOCATION_NAME_MAX}
+              placeholder="Enter location name"
               aria-invalid={fieldState.invalid}
-              className="h-12 rounded-xl px-3.5"
+              className={inputClass}
             />
             <div className="flex items-start justify-between gap-4">
               <FieldError errors={[fieldState.error]} className="text-xs" />
@@ -109,14 +160,48 @@ function LocationForm({
         )}
       />
 
-      <div className="mt-6 flex justify-end gap-2">
+      <Controller
+        name="address"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid} className="gap-2">
+            <FieldLabel htmlFor="location-address">Address</FieldLabel>
+            <Input
+              {...field}
+              id="location-address"
+              autoComplete="off"
+              maxLength={LOCATION_ADDRESS_MAX}
+              placeholder="e.g. Riverside Drive, Nairobi"
+              aria-invalid={fieldState.invalid}
+              className={inputClass}
+            />
+            <FieldError errors={[fieldState.error]} className="text-xs" />
+          </Field>
+        )}
+      />
+
+      <div className="mt-1 flex justify-end gap-2">
         <DialogClose asChild>
-          <Button type="button" variant="ghost" className="h-11 px-5">
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={mutation.isPending}
+            className="h-11 px-5"
+          >
             Cancel
           </Button>
         </DialogClose>
-        <Button type="submit" className="h-11 rounded-xl px-6">
-          {location ? "Save changes" : "Add location"}
+        <Button
+          type="submit"
+          disabled={mutation.isPending}
+          className="h-11 rounded-xl px-6"
+        >
+          {mutation.isPending && <Loader2Icon className="animate-spin" />}
+          {mutation.isPending
+            ? "Saving…"
+            : location
+              ? "Save changes"
+              : "Add location"}
         </Button>
       </div>
     </form>

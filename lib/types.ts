@@ -7,6 +7,16 @@ export type Location = {
   name: string
 }
 
+// A work location as returned by GET /staff/locations
+export type StaffLocation = {
+  location_id: string
+  name: string
+  address: string
+  active: boolean
+  created_at: string
+  staff_count: number
+}
+
 export type RoleName = "admin" | "manager" | "staff"
 
 export type Role = {
@@ -57,6 +67,47 @@ export type Staff = {
   email?: string
   phone?: string
   startDate: string
+}
+
+// A staff record as returned by GET /staff/staff
+export type StaffMember = {
+  staff_id: string
+  full_name: string
+  role: string
+  phone: string | null
+  email: string | null
+  date_of_birth: string | null
+  start_date: string | null
+  // The location's name, not its id
+  work_location: string | null
+  staff_number: string | null
+  employment_status: string
+  national_id: string | null
+  passport: string | null
+  drivers_licence: string | null
+  nssf_number: string | null
+  sha_number: string | null
+  kra_pin: string | null
+  sacco: string | null
+  life_cover_provider: string | null
+  policy_number: string | null
+  life_benefit: number | null
+  critical_illness_benefit: number | null
+  disability_benefit: number | null
+  funeral_benefit: number | null
+  life_premium: number | null
+  beneficiary: string | null
+  beneficiary_id: string | null
+  photo_url: string | null
+  notes: string | null
+  is_active: boolean
+  created_at: string
+  auth_role: RoleName | null
+}
+
+export type StaffFilters = {
+  // A location_id from GET /staff/locations
+  location?: string
 }
 
 // Dates are ISO strings (yyyy-MM-dd); start and end are both inclusive

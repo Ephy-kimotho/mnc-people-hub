@@ -5,6 +5,7 @@ import { Loader2Icon } from "lucide-react"
 import Link from "next/link"
 import { Controller, useForm } from "react-hook-form"
 
+import { PasswordInput } from "@/components/password-input"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -91,10 +92,9 @@ export function LoginForm() {
                       Forgot password?
                     </Link>
                   </div>
-                  <Input
+                  <PasswordInput
                     {...field}
                     id="password"
-                    type="password"
                     autoComplete="current-password"
                     aria-invalid={fieldState.invalid}
                     className="h-12 rounded-xl px-3.5"

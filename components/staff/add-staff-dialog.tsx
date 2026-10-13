@@ -27,13 +27,13 @@ import {
 import { ANNUAL_LEAVE_DAYS } from "@/lib/leave"
 import { staffSchema, type StaffValues } from "@/lib/schemas/staff"
 import { staffRoles } from "@/lib/staff"
-import type { Location } from "@/lib/types"
+import type { StaffLocation } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 type AddStaffDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  locations: Location[]
+  locations: StaffLocation[]
   onSave: (values: StaffValues) => void
 }
 
@@ -153,7 +153,10 @@ function AddStaffForm({
               </SelectTrigger>
               <SelectContent>
                 {locations.map((location) => (
-                  <SelectItem key={location.id} value={location.id}>
+                  <SelectItem
+                    key={location.location_id}
+                    value={location.location_id}
+                  >
                     {location.name}
                   </SelectItem>
                 ))}

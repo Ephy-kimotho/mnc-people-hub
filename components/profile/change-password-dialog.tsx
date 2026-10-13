@@ -5,6 +5,7 @@ import { CircleCheckIcon, Loader2Icon } from "lucide-react"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 
+import { PasswordInput } from "@/components/password-input"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -15,7 +16,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
 import { changePassword } from "@/lib/api/auth"
 import { getErrorMessage } from "@/lib/api/errors"
 import {
@@ -136,10 +136,9 @@ function ChangePasswordForm() {
                 <FieldLabel htmlFor={item.name}>
                   {item.label} <span className="text-destructive">*</span>
                 </FieldLabel>
-                <Input
+                <PasswordInput
                   {...field}
                   id={item.name}
-                  type="password"
                   autoComplete={item.autoComplete}
                   autoFocus={index === 0}
                   placeholder={item.placeholder}

@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 
+import { PasswordInput } from "@/components/password-input"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -15,7 +16,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
 import { confirmPasswordReset } from "@/lib/api/auth"
 import { getErrorMessage } from "@/lib/api/errors"
 import {
@@ -125,10 +125,9 @@ export function ResetPasswordForm({ token }: { token?: string }) {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid} className="gap-2">
                   <FieldLabel htmlFor="password">New password</FieldLabel>
-                  <Input
+                  <PasswordInput
                     {...field}
                     id="password"
-                    type="password"
                     autoComplete="new-password"
                     autoFocus
                     placeholder="Enter a new password"
@@ -148,10 +147,9 @@ export function ResetPasswordForm({ token }: { token?: string }) {
                   <FieldLabel htmlFor="confirm-password">
                     Confirm password
                   </FieldLabel>
-                  <Input
+                  <PasswordInput
                     {...field}
                     id="confirm-password"
-                    type="password"
                     autoComplete="new-password"
                     placeholder="Re-enter the new password"
                     aria-invalid={fieldState.invalid}

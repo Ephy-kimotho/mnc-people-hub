@@ -21,7 +21,8 @@ export function StaffAvatar({
   )
 }
 
-// Each location gets a stable tint based on its position in the list
+// Each location gets a stable tint based on its position in the list;
+// an index of -1 (a name not in the list) falls back to the muted tint
 const tones = [
   "bg-brand-soft text-brand-ink",
   "bg-success-soft text-success",
@@ -33,7 +34,7 @@ export function LocationPill({ name, index }: { name: string; index: number }) {
     <span
       className={cn(
         "inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
-        tones[index % tones.length]
+        index < 0 ? tones[2] : tones[index % tones.length]
       )}
     >
       <span className="size-1.5 shrink-0 rounded-full bg-current" />
