@@ -1,5 +1,11 @@
-import React from "react"
+import type { Metadata } from "next"
 
-export default function page() {
-  return <div></div>
+import { ForgotPasswordForm } from "@/components/auth/forgot-password-form"
+
+export const metadata: Metadata = {
+  title: "Forgot password",
+}
+
+export default function ForgotPasswordPage() {
+  return <ForgotPasswordForm />
 }
