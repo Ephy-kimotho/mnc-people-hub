@@ -3,7 +3,6 @@
 import { MenuIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
