@@ -69,7 +69,7 @@ export type Staff = {
   startDate: string
 }
 
-// A staff record as returned by GET /staff/staff
+// A staff record as returned by GET /staff/staff and /staff/staff/{id}
 export type StaffMember = {
   staff_id: string
   full_name: string
@@ -80,6 +80,7 @@ export type StaffMember = {
   start_date: string | null
   // The location's name, not its id
   work_location: string | null
+  work_location_id?: string | null
   staff_number: string | null
   employment_status: string
   national_id: string | null
@@ -103,6 +104,16 @@ export type StaffMember = {
   is_active: boolean
   created_at: string
   auth_role: RoleName | null
+}
+
+// An emergency contact as returned by GET /staff/staff/{id}/emergency-contacts
+export type EmergencyContact = {
+  contact_id: string
+  full_name: string
+  relationship: string
+  phone: string
+  national_id: string | null
+  is_primary: boolean
 }
 
 export type StaffFilters = {

@@ -13,6 +13,15 @@ export const staffRoles = [
   "General Help",
 ]
 
+export const contactRelationships = [
+  "Spouse",
+  "Parent",
+  "Sibling",
+  "Child",
+  "Friend",
+  "Other relative",
+]
+
 // "Abdi Nyongesa" -> "A"; matches the single-letter avatars in the design
 export function initials(name: string) {
   return name.trim().charAt(0).toUpperCase()

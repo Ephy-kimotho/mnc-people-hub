@@ -32,7 +32,7 @@ export function StaffRowActions({
       <DropdownMenuContent align="end" className="min-w-40">
         <DropdownMenuItem onSelect={onView}>
           <EyeIcon />
-          View details
+          View profile
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onSelect={onDelete}>

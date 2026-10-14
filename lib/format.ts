@@ -33,3 +33,10 @@ export function formatISODate(date: Date) {
 export function formatDayCount(days: number) {
   return `${days} ${days === 1 ? "Day" : "Days"}`
 }
+
+// "1,000,000"; whole shilling amounts without a currency symbol
+export function formatAmount(amount: number) {
+  return new Intl.NumberFormat("en-KE", { maximumFractionDigits: 0 }).format(
+    amount
+  )
+}

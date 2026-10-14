@@ -1,11 +1,8 @@
 "use client"
 
-import {
-  keepPreviousData,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { MapPinIcon, PlusIcon, SearchIcon } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import { PageHeader } from "@/components/dashboard/page-header"
@@ -13,7 +10,6 @@ import { TablePagination } from "@/components/table-pagination"
 import { AddStaffDialog } from "@/components/staff/add-staff-dialog"
 import { DeleteStaffDialog } from "@/components/staff/delete-staff-dialog"
 import { LocationPill, StaffAvatar } from "@/components/staff/staff-bits"
-import { StaffDetailsDialog } from "@/components/staff/staff-details-dialog"
 import { StaffRowActions } from "@/components/staff/staff-row-actions"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -31,18 +27,17 @@ import { usePagination } from "@/hooks/use-pagination"
 import { getErrorMessage } from "@/lib/api/errors"
 import { fetchStaff, staffKeys } from "@/lib/api/staff"
 import { formatDate } from "@/lib/format"
-import type { StaffValues } from "@/lib/schemas/staff"
 import type { StaffFilters, StaffMember } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
-type DialogKind = "add" | "details" | "delete"
+type DialogKind = "add" | "delete"
 
 // Shared by header and rows so columns line up once the card is wide enough
 const columns =
   "@3xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,0.8fr)_3rem] @3xl:gap-x-4"
 
 export function StaffDirectory() {
-  const queryClient = useQueryClient()
+  const router = useRouter()
   const [search, setSearch] = useState("")
   const [locationFilter, setLocationFilter] = useState("all")
   const [openDialog, setOpenDialog] = useState<DialogKind | null>(null)
@@ -92,28 +87,6 @@ export function StaffDirectory() {
 
   function closeDialog(isOpen: boolean) {
     if (!isOpen) setOpenDialog(null)
-  }
-
-  // Adds only update the cached list until there's an endpoint to save
-  // them to, so they're lost on the next refetch
-  function addStaff(values: StaffValues) {
-    const member = {
-      staff_id: crypto.randomUUID(),
-      full_name: values.name,
-      role: values.role,
-      phone: values.phone || null,
-      email: values.email || null,
-      start_date: values.startDate,
-      work_location:
-        locations.find((l) => l.location_id === values.locationId)?.name ??
-        null,
-      is_active: true,
-    } as StaffMember
-    queryClient.setQueryData<StaffMember[]>(
-      staffKeys.list(filters),
-      (prev = []) => [...prev, member]
-    )
-    setOpenDialog(null)
   }
 
   return (
@@ -235,7 +208,7 @@ export function StaffDirectory() {
                 key={member.staff_id}
                 member={member}
                 locationIndex={locationIndex(member.work_location)}
-                onView={() => open("details", member)}
+                onView={() => router.push(`/staff/${member.staff_id}`)}
                 onDelete={() => open("delete", member)}
               />
             ))}
@@ -249,12 +222,6 @@ export function StaffDirectory() {
         open={openDialog === "add"}
         onOpenChange={closeDialog}
         locations={locations}
-        onSave={addStaff}
-      />
-      <StaffDetailsDialog
-        open={openDialog === "details"}
-        onOpenChange={closeDialog}
-        staff={selected}
       />
       <DeleteStaffDialog
         open={openDialog === "delete"}
