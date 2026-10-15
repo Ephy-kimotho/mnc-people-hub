@@ -14,7 +14,8 @@ import {
 type StaffRowActionsProps = {
   name: string
   onView: () => void
-  onDelete: () => void
+  // Left out for people who can't delete staff
+  onDelete?: () => void
 }
 
 export function StaffRowActions({
@@ -34,11 +35,15 @@ export function StaffRowActions({
           <EyeIcon />
           View profile
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" onSelect={onDelete}>
-          <Trash2Icon />
-          Delete staff
-        </DropdownMenuItem>
+        {onDelete && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+              <Trash2Icon />
+              Delete staff
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )

@@ -24,13 +24,14 @@ type LeaveRowActionsProps = {
   name: string
   status: LeaveStatus
   event: CalendarEvent
-  onApprove: () => void
-  onReject: () => void
+  // Actions the user isn't allowed to take are left out
+  onApprove?: () => void
+  onReject?: () => void
   onEdit: () => void
-  onRecall: () => void
+  onRecall?: () => void
 }
 
-// Only actions that make sense for the request's current status are shown
+// Only actions the user may take, and that suit the request's status, show
 export function LeaveRowActions({
   name,
   status,
@@ -52,17 +53,21 @@ export function LeaveRowActions({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-44">
         <AddToCalendarSub event={event} />
-        {pending && (
+        {pending && (onApprove || onReject) && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={onApprove}>
-              <CheckIcon />
-              Approve
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={onReject}>
-              <XIcon />
-              Reject
-            </DropdownMenuItem>
+            {onApprove && (
+              <DropdownMenuItem onSelect={onApprove}>
+                <CheckIcon />
+                Approve
+              </DropdownMenuItem>
+            )}
+            {onReject && (
+              <DropdownMenuItem onSelect={onReject}>
+                <XIcon />
+                Reject
+              </DropdownMenuItem>
+            )}
           </>
         )}
         {active && (
@@ -72,10 +77,12 @@ export function LeaveRowActions({
               <PencilIcon />
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem variant="destructive" onSelect={onRecall}>
-              <RotateCcwIcon />
-              Recall
-            </DropdownMenuItem>
+            {onRecall && (
+              <DropdownMenuItem variant="destructive" onSelect={onRecall}>
+                <RotateCcwIcon />
+                Recall
+              </DropdownMenuItem>
+            )}
           </>
         )}
       </DropdownMenuContent>

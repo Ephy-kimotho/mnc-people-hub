@@ -79,6 +79,8 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
 function AddUserForm({ onCreated }: { onCreated: () => void }) {
   const queryClient = useQueryClient()
   const rolesQuery = useRoles()
+  // New users are admins or managers; staff members aren't offered here
+  const roles = rolesQuery.data?.filter((role) => role.name !== "staff")
 
   const form = useForm<CreateUserValues>({
     resolver: zodResolver(createUserSchema),
@@ -148,9 +150,7 @@ function AddUserForm({ onCreated }: { onCreated: () => void }) {
           name="role"
           control={form.control}
           render={({ field, fieldState }) => {
-            const selected = rolesQuery.data?.find(
-              (role) => role.name === field.value
-            )
+            const selected = roles?.find((role) => role.name === field.value)
             return (
               <Field data-invalid={fieldState.invalid} className="gap-2">
                 <FieldLabel htmlFor="user-role">
@@ -178,7 +178,7 @@ function AddUserForm({ onCreated }: { onCreated: () => void }) {
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {rolesQuery.data?.map((role) => (
+                    {roles?.map((role) => (
                       <SelectItem key={role.name} value={role.name}>
                         {role.label}
                       </SelectItem>

@@ -1,7 +1,7 @@
 "use client"
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
-import { PlusIcon, ShieldOffIcon } from "lucide-react"
+import { PlusIcon } from "lucide-react"
 import { useState } from "react"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { TablePagination } from "@/components/table-pagination"
@@ -45,19 +45,8 @@ const selectClass =
 export function UsersView() {
   const { user } = useAuth()
 
-  if (user?.role !== "admin") {
-    return (
-      <Card className="mx-auto max-w-md items-center gap-3 rounded-2xl px-6 py-10 text-center">
-        <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-          <ShieldOffIcon className="size-5" />
-        </span>
-        <h1 className="font-heading text-xl font-semibold">Admins only</h1>
-        <p className="text-sm text-muted-foreground">
-          You need an administrator account to manage users.
-        </p>
-      </Card>
-    )
-  }
+  // The page guard keeps everyone but admins out
+  if (!user) return null
 
   return <UsersManager currentUserId={user.user_id} />
 }

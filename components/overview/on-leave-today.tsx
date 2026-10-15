@@ -9,13 +9,21 @@ import { useDashboard } from "@/hooks/use-dashboard"
 import { usePagination } from "@/hooks/use-pagination"
 import { getErrorMessage } from "@/lib/api/errors"
 import { formatDateRange } from "@/lib/format"
+import { canSeeTeamOverview } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/providers/auth-provider"
 
 // Shared by header and rows so columns line up once the card is wide enough
 const columns =
   "@2xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,1.3fr)_minmax(0,1.2fr)] @2xl:gap-x-4"
 
+// Lists other people's leave, so staff don't get it (or fetch its data)
 export function OnLeaveToday() {
+  const { user } = useAuth()
+  return canSeeTeamOverview(user) ? <OnLeaveTodayCard /> : null
+}
+
+function OnLeaveTodayCard() {
   const query = useDashboard()
   const rows = query.data?.on_leave_today ?? []
   const pagination = usePagination(rows)

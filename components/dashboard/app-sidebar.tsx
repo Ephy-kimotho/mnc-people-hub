@@ -29,9 +29,7 @@ export function AppSidebar() {
   const pathname = usePathname()
   const { setOpenMobile } = useSidebar()
   const { user } = useAuth()
-  const visibleItems = navItems.filter((item) =>
-    canSeeNavItem(item, user?.role)
-  )
+  const visibleItems = navItems.filter((item) => canSeeNavItem(item, user))
 
   return (
     <Sidebar>

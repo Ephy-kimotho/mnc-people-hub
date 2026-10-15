@@ -20,9 +20,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getErrorMessage } from "@/lib/api/errors"
 import { fetchStaffMember, staffKeys } from "@/lib/api/staff"
 import { formatDate } from "@/lib/format"
+import { canAccessPage } from "@/lib/permissions"
 import type { StaffMember } from "@/lib/types"
+import { useAuth } from "@/providers/auth-provider"
 
 export function StaffProfile({ staffId }: { staffId: string }) {
+  const { user } = useAuth()
   const query = useQuery({
     queryKey: staffKeys.detail(staffId),
     queryFn: () => fetchStaffMember(staffId),
@@ -30,13 +33,16 @@ export function StaffProfile({ staffId }: { staffId: string }) {
 
   return (
     <div className="space-y-6">
-      <Link
-        href="/staff"
-        className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeftIcon className="size-4" />
-        Back to Directory
-      </Link>
+      {/* Staff viewing their own profile can't open the directory */}
+      {canAccessPage(user, "/staff") && (
+        <Link
+          href="/staff"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeftIcon className="size-4" />
+          Back to Directory
+        </Link>
+      )}
 
       {query.isPending ? (
         <ProfileSkeleton />

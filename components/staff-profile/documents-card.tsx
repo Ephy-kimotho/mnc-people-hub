@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getErrorMessage } from "@/lib/api/errors"
 import { fetchStaffDocuments, staffKeys } from "@/lib/api/staff"
 import { formatDate, formatFileSize } from "@/lib/format"
+import { canManageStaff } from "@/lib/permissions"
 import { documentCategoryLabels } from "@/lib/staff"
 import type { DocumentCategory, StaffDocument, StaffMember } from "@/lib/types"
 import { useAuth } from "@/providers/auth-provider"
@@ -48,8 +49,8 @@ export function DocumentsCard({ staff }: { staff: StaffMember }) {
   const [uploading, setUploading] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [selected, setSelected] = useState<StaffDocument>()
-  // Uploads and deletes follow the profile edit rule: admins and managers only
-  const canManage = user?.role === "admin" || user?.role === "manager"
+  // Uploads and deletes follow the profile edit rule: admins only
+  const canManage = canManageStaff(user)
 
   // Refetched after an upload, since that invalidates every staff query
   const query = useQuery({

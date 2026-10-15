@@ -20,6 +20,7 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { fetchStaffPhoto, staffKeys } from "@/lib/api/staff"
 import { formatDate } from "@/lib/format"
+import { canManageStaff } from "@/lib/permissions"
 import type { StaffMember } from "@/lib/types"
 import { useAuth } from "@/providers/auth-provider"
 
@@ -35,8 +36,8 @@ export function ProfileCard({ staff }: { staff: StaffMember }) {
     staleTime: (query) =>
       Math.max((query.state.data?.expires_in ?? 0) - 60, 0) * 1000,
   })
-  // Profile updates are limited to admins and managers
-  const canEdit = user?.role === "admin" || user?.role === "manager"
+  // Profile and photo updates are limited to admins
+  const canEdit = canManageStaff(user)
 
   return (
     <Card className="gap-0 rounded-2xl px-6 py-8 shadow-xs">

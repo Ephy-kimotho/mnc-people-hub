@@ -8,11 +8,13 @@ import { LeaveStatusBadge } from "@/components/leave/leave-status-badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useLeaveRequests } from "@/hooks/use-leave-requests"
+import { useVisibleLeaveRequests } from "@/hooks/use-leave-requests"
 import { getErrorMessage } from "@/lib/api/errors"
 import { formatDateRange } from "@/lib/format"
 import { durationLabel, latestRequests, leaveTypeLabels } from "@/lib/leave"
+import { canSeeTeamOverview } from "@/lib/permissions"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/providers/auth-provider"
 
 // Shared by header and rows so columns line up; applies once the card is wide.
 // The calendar column is fixed-width since `auto` would size per row.
@@ -20,7 +22,9 @@ const columns =
   "@2xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,1.6fr)_minmax(0,0.9fr)_10.5rem] @2xl:gap-x-3"
 
 export function RecentLeaveRequests() {
-  const leaveQuery = useLeaveRequests()
+  // Staff only see their own requests
+  const { user } = useAuth()
+  const leaveQuery = useVisibleLeaveRequests()
   const rows = latestRequests(leaveQuery.data ?? [], 5)
 
   return (
@@ -31,7 +35,9 @@ export function RecentLeaveRequests() {
             Recent leave requests
           </h2>
           <p className="text-xs text-muted-foreground">
-            The latest activity across your team
+            {canSeeTeamOverview(user)
+              ? "The latest activity across your team"
+              : "Your latest requests"}
           </p>
         </div>
         <Link

@@ -1,8 +1,12 @@
+"use client"
+
 import { ArrowRightIcon, CalendarDaysIcon } from "lucide-react"
 import Link from "next/link"
 
 import { Eyebrow } from "@/components/dashboard/eyebrow"
 import { Button } from "@/components/ui/button"
+import { canAccessPage } from "@/lib/permissions"
+import { useAuth } from "@/providers/auth-provider"
 
 const links = [
   { label: "Review requests", href: "/leaves" },
@@ -10,6 +14,10 @@ const links = [
 ]
 
 export function LeaveEssentials() {
+  const { user } = useAuth()
+  // Links to pages the user can't open (the directory for staff) are hidden
+  const visibleLinks = links.filter((link) => canAccessPage(user, link.href))
+
   return (
     <aside className="flex flex-col rounded-2xl border border-brand/30 bg-brand-soft p-6">
       <span className="mb-8 flex size-10 items-center justify-center rounded-full bg-brand text-brand-foreground">
@@ -25,7 +33,7 @@ export function LeaveEssentials() {
       </p>
 
       <div className="mt-8 space-y-3 lg:mt-auto lg:pt-8">
-        {links.map((link) => (
+        {visibleLinks.map((link) => (
           <Button
             key={link.href}
             asChild

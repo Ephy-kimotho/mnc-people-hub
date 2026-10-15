@@ -9,10 +9,19 @@ import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLocations } from "@/hooks/use-locations"
 import { getErrorMessage } from "@/lib/api/errors"
+import { canAccessPage, canSeeTeamOverview } from "@/lib/permissions"
+import { useAuth } from "@/providers/auth-provider"
 
 // Shares the locations page's cached query, so names and counts always match
+// Team head counts, so staff don't get it (or fetch its data)
 export function StaffByLocation() {
+  const { user } = useAuth()
+  return canSeeTeamOverview(user) ? <StaffByLocationCards /> : null
+}
+
+function StaffByLocationCards() {
   const query = useLocations()
+  const { user } = useAuth()
 
   return (
     <section className="space-y-3">
@@ -49,12 +58,14 @@ export function StaffByLocation() {
       ) : query.data.length === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed py-10 text-center text-sm text-muted-foreground">
           No locations yet.
-          <Link
-            href="/locations"
-            className="font-medium text-foreground underline-offset-4 hover:underline"
-          >
-            Add one on the Locations page
-          </Link>
+          {canAccessPage(user, "/locations") && (
+            <Link
+              href="/locations"
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              Add one on the Locations page
+            </Link>
+          )}
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">

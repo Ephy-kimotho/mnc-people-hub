@@ -46,12 +46,13 @@ export interface AuthUser {
   is_locked: boolean
   created_at: string
   updated_at: string
+  // The staff record linked to this account, if any. Staff users only see
+  // their own leave and profile through it.
+  staff_id: string | null
 }
 
 // An account as listed on the admin users page
-export interface User extends AuthUser {
-  staff_id: string | null
-}
+export type User = AuthUser
 
 export type UserStats = {
   total_users: number

@@ -28,12 +28,15 @@ export const staffKeys = {
     ["staff", "detail", staffId, "documents"] as const,
 }
 
-// Only active staff are listed; axios drops an unset location from the URL
+// Only active staff are listed; axios drops an unset location from the URL.
+// The API can return a staff member more than once (seen when signed in as
+// a manager), so repeats are dropped to keep one row per staff_id.
 export async function fetchStaff(filters: StaffFilters) {
   const response = await axiosInstance.get<StaffMember[]>("/staff/staff", {
     params: { active_only: true, ...filters },
   })
-  return response.data
+  const byId = new Map(response.data.map((s) => [s.staff_id, s]))
+  return [...byId.values()]
 }
 
 export async function fetchStaffMember(staffId: string) {

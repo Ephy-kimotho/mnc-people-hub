@@ -41,7 +41,9 @@ import {
   leaveRequestSchema,
   type LeaveRequestValues,
 } from "@/lib/schemas/leave"
+import { isStaffRole } from "@/lib/permissions"
 import type { DurationType, HalfDayPeriod, LeaveType } from "@/lib/types"
+import { useAuth } from "@/providers/auth-provider"
 
 const defaultValues: LeaveRequestValues = {
   staffId: "",
@@ -71,12 +73,18 @@ export function LeaveRequestForm({
   staffId?: string
 }) {
   const queryClient = useQueryClient()
+  const { user } = useAuth()
+  // Staff accounts can only request leave for themselves
+  const selfOnly = isStaffRole(user)
   const staffQuery = useStaff()
   const staff = (staffQuery.data ?? []).toSorted((a, b) =>
     a.full_name.localeCompare(b.full_name)
   )
   // A staff member passed in stays picked after each submit
-  const initialValues = { ...defaultValues, staffId: initialStaffId }
+  const initialValues = {
+    ...defaultValues,
+    staffId: selfOnly ? (user?.staff_id ?? "") : initialStaffId,
+  }
   const form = useForm<LeaveRequestValues>({
     resolver: zodResolver(leaveRequestSchema),
     defaultValues: initialValues,
@@ -95,13 +103,17 @@ export function LeaveRequestForm({
       ],
     })
   const isFullDay = durationType === "full_day"
-  const member = staff.find((s) => s.staff_id === staffId)
+  // Staff users may not be able to load the staff list, so their own id counts
+  const memberName = selfOnly
+    ? user?.full_name
+    : staff.find((s) => s.staff_id === staffId)?.full_name
+  const hasStaff = Boolean(staffId && memberName)
   // This year's requests for the picked staff member, for their annual balance
   const historyQuery = useLeaveRequests(
     { staff_id: staffId, year: getYear(new Date()) },
     { enabled: Boolean(staffId) }
   )
-  const leaveTaken = member
+  const leaveTaken = hasStaff
     ? annualLeaveTaken(historyQuery.data ?? [], staffId)
     : 0
   const remaining = Math.max(ANNUAL_LEAVE_DAYS - leaveTaken, 0)
@@ -124,7 +136,7 @@ export function LeaveRequestForm({
     {
       value: "annual",
       label: "Annual Leave",
-      hint: member
+      hint: hasStaff
         ? `${remaining} of ${ANNUAL_LEAVE_DAYS} days left`
         : `Deducted from ${ANNUAL_LEAVE_DAYS} days`,
     },
@@ -137,7 +149,9 @@ export function LeaveRequestForm({
     mutationFn: createLeaveRequest,
     onSuccess: (_data, values) => {
       void queryClient.invalidateQueries({ queryKey: leaveKeys.all })
-      const name = staff.find((s) => s.staff_id === values.staffId)?.full_name
+      const name = selfOnly
+        ? "you"
+        : staff.find((s) => s.staff_id === values.staffId)?.full_name
       toast.success(`Leave request submitted for ${name}`)
       form.reset(initialValues)
     },
@@ -154,12 +168,12 @@ export function LeaveRequestForm({
   }
 
   function onSubmit(values: LeaveRequestValues) {
-    if (!member) return
+    if (!hasStaff) return
     const count = leaveDays(values)
     // Annual leave can't exceed what's left of the statutory 21 days
     if (values.type === "annual" && count > remaining) {
       form.setError(isFullDay ? "endDate" : "startDate", {
-        message: `${member.full_name} only has ${formatDayCount(remaining).toLowerCase()} of annual leave left`,
+        message: `${selfOnly ? "You" : memberName} only ${selfOnly ? "have" : "has"} ${formatDayCount(remaining).toLowerCase()} of annual leave left`,
       })
       return
     }
@@ -179,34 +193,43 @@ export function LeaveRequestForm({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid} className="gap-2">
               <FieldLabel htmlFor="leave-staff">Staff Member</FieldLabel>
-              <Select
-                value={field.value}
-                onValueChange={field.onChange}
-                disabled={staffQuery.isPending || staffQuery.isError}
-              >
-                <SelectTrigger
+              {selfOnly ? (
+                <p
                   id="leave-staff"
-                  aria-invalid={fieldState.invalid}
-                  className="h-12 w-full rounded-xl px-4 data-[size=default]:h-12"
+                  className="flex h-12 items-center rounded-xl border bg-muted/50 px-4 text-sm"
                 >
-                  <SelectValue
-                    placeholder={
-                      staffQuery.isPending
-                        ? "Loading staff..."
-                        : staffQuery.isError
-                          ? "Couldn't load staff"
-                          : "Select an employee..."
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {staff.map((s) => (
-                    <SelectItem key={s.staff_id} value={s.staff_id}>
-                      {s.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  {user?.full_name}
+                </p>
+              ) : (
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  disabled={staffQuery.isPending || staffQuery.isError}
+                >
+                  <SelectTrigger
+                    id="leave-staff"
+                    aria-invalid={fieldState.invalid}
+                    className="h-12 w-full rounded-xl px-4 data-[size=default]:h-12"
+                  >
+                    <SelectValue
+                      placeholder={
+                        staffQuery.isPending
+                          ? "Loading staff..."
+                          : staffQuery.isError
+                            ? "Couldn't load staff"
+                            : "Select an employee..."
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {staff.map((s) => (
+                      <SelectItem key={s.staff_id} value={s.staff_id}>
+                        {s.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <FieldError errors={[fieldState.error]} className="text-xs" />
             </Field>
           )}

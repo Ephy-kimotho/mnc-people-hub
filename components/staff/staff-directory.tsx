@@ -25,9 +25,11 @@ import { useLocations } from "@/hooks/use-locations"
 import { usePagination } from "@/hooks/use-pagination"
 import { useStaff } from "@/hooks/use-staff"
 import { getErrorMessage } from "@/lib/api/errors"
+import { canManageStaff } from "@/lib/permissions"
 import { formatDate } from "@/lib/format"
 import type { StaffFilters, StaffMember } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/providers/auth-provider"
 
 type DialogKind = "add" | "delete"
 
@@ -37,6 +39,9 @@ const columns =
 
 export function StaffDirectory() {
   const router = useRouter()
+  const { user } = useAuth()
+  // Managers can browse the directory but only admins add or delete staff
+  const canManage = canManageStaff(user)
   const [search, setSearch] = useState("")
   const [locationFilter, setLocationFilter] = useState("all")
   const [openDialog, setOpenDialog] = useState<DialogKind | null>(null)
@@ -90,13 +95,15 @@ export function StaffDirectory() {
         title="Staff Directory"
         description="Manage your household team members"
         action={
-          <Button
-            className="h-10 self-start rounded-full px-5"
-            onClick={() => open("add")}
-          >
-            <PlusIcon />
-            Add Staff Member
-          </Button>
+          canManage && (
+            <Button
+              className="h-10 self-start rounded-full px-5"
+              onClick={() => open("add")}
+            >
+              <PlusIcon />
+              Add Staff Member
+            </Button>
+          )
         }
       />
 
@@ -203,7 +210,7 @@ export function StaffDirectory() {
                 member={member}
                 locationIndex={locationIndex(member.work_location)}
                 onView={() => router.push(`/staff/${member.staff_id}`)}
-                onDelete={() => open("delete", member)}
+                onDelete={canManage ? () => open("delete", member) : undefined}
               />
             ))}
           </ul>
@@ -212,16 +219,20 @@ export function StaffDirectory() {
         <TablePagination pagination={pagination} label="staff" />
       </Card>
 
-      <AddStaffDialog
-        open={openDialog === "add"}
-        onOpenChange={closeDialog}
-        locations={locations}
-      />
-      <DeleteStaffDialog
-        open={openDialog === "delete"}
-        onOpenChange={closeDialog}
-        staff={selected}
-      />
+      {canManage && (
+        <>
+          <AddStaffDialog
+            open={openDialog === "add"}
+            onOpenChange={closeDialog}
+            locations={locations}
+          />
+          <DeleteStaffDialog
+            open={openDialog === "delete"}
+            onOpenChange={closeDialog}
+            staff={selected}
+          />
+        </>
+      )}
     </div>
   )
 }
@@ -235,7 +246,7 @@ function StaffRow({
   member: StaffMember
   locationIndex: number
   onView: () => void
-  onDelete: () => void
+  onDelete?: () => void
 }) {
   const location = member.work_location && (
     <LocationPill name={member.work_location} index={locationIndex} />

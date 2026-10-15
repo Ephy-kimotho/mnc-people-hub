@@ -15,14 +15,16 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useLeaveRequests } from "@/hooks/use-leave-requests"
+import { useVisibleLeaveRequests } from "@/hooks/use-leave-requests"
 import { usePagination } from "@/hooks/use-pagination"
 import { getErrorMessage } from "@/lib/api/errors"
 import { formatDateRange } from "@/lib/format"
 import { durationLabel, leaveDays, leaveTypeLabels } from "@/lib/leave"
+import { canRecallLeave, canReviewLeave } from "@/lib/permissions"
 import type { LeaveRequestValues } from "@/lib/schemas/leave"
 import type { LeaveRequest, LeaveStatus } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/providers/auth-provider"
 
 type Tab = LeaveStatus | "all"
 type DialogKind = "approve" | "edit" | "reject" | "recall"
@@ -43,12 +45,13 @@ const tabs: { value: Tab; label: string; empty: string }[] = [
 const columns =
   "@3xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_3rem] @3xl:gap-x-4"
 
-type LeaveQuery = ReturnType<typeof useLeaveRequests>
+type LeaveQuery = ReturnType<typeof useVisibleLeaveRequests>
 
 // Edits are kept as local changes on top of the fetched requests until
 // their endpoint is wired up. Approve, reject and recall hit the API.
+// Staff only see their own requests and can only recall them.
 export function LeaveRequests() {
-  const leaveQuery = useLeaveRequests()
+  const leaveQuery = useVisibleLeaveRequests()
   const [changes, setChanges] = useState<Record<string, Partial<LeaveRequest>>>(
     {}
   )
@@ -163,6 +166,8 @@ function LeaveTable({
   empty: string
   onOpen: (kind: DialogKind, request: LeaveRequest) => void
 }) {
+  const { user } = useAuth()
+  const canReview = canReviewLeave(user)
   const pagination = usePagination(rows)
 
   return (
@@ -237,10 +242,18 @@ function LeaveTable({
                       start: request.startDate,
                       end: request.endDate,
                     }}
-                    onApprove={() => onOpen("approve", request)}
-                    onReject={() => onOpen("reject", request)}
+                    onApprove={
+                      canReview ? () => onOpen("approve", request) : undefined
+                    }
+                    onReject={
+                      canReview ? () => onOpen("reject", request) : undefined
+                    }
                     onEdit={() => onOpen("edit", request)}
-                    onRecall={() => onOpen("recall", request)}
+                    onRecall={
+                      canRecallLeave(user, request)
+                        ? () => onOpen("recall", request)
+                        : undefined
+                    }
                   />
                 </div>
 
