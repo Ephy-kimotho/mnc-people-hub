@@ -1,3 +1,5 @@
+import type { DocumentCategory } from "@/lib/types"
+
 export const staffRoles = [
   "Executive Assistant",
   "Office Administrator",
@@ -21,6 +23,19 @@ export const contactRelationships = [
   "Friend",
   "Other relative",
 ]
+
+export const documentCategoryLabels: Record<DocumentCategory, string> = {
+  NationalID: "National ID",
+  Passport: "Passport",
+  DriversLicence: "Driver's Licence",
+  Contract: "Contract",
+  NSSF: "NSSF",
+  SHA: "SHA",
+  KRA: "KRA",
+  CV: "CV",
+  RecommendationLetter: "Recommendation Letter",
+  Other: "Other",
+}
 
 // "Abdi Nyongesa" -> "A"; matches the single-letter avatars in the design
 export function initials(name: string) {

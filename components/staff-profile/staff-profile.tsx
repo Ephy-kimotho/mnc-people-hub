@@ -86,7 +86,7 @@ function ProfileLayout({ staff }: { staff: StaffMember }) {
       <div className="space-y-6">
         <LeaveBalance staffId={staff.staff_id} />
         <LifeCoverCard staff={staff} />
-        <DocumentsCard />
+        <DocumentsCard staff={staff} />
 
         <div className="flex flex-col gap-4 rounded-2xl border border-brand/30 bg-brand-soft/60 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">

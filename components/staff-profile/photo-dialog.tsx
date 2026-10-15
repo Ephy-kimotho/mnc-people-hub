@@ -7,6 +7,7 @@ import { useEffect, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import toast from "react-hot-toast"
 
+import { FileDropzone } from "@/components/file-dropzone"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -26,7 +27,6 @@ import {
   type StaffPhotoValues,
 } from "@/lib/schemas/staff"
 import type { StaffMember } from "@/lib/types"
-import { cn } from "@/lib/utils"
 
 type PhotoDialogProps = {
   open: boolean
@@ -97,7 +97,12 @@ function PhotoForm({
                 onRemove={() => form.resetField("photo")}
               />
             ) : (
-              <PhotoDropzone
+              <FileDropzone
+                id="staff-photo"
+                icon={ImageUpIcon}
+                noun="photo"
+                hint={`JPG, PNG or WebP, up to ${PHOTO_MAX_MB} MB`}
+                accept={PHOTO_TYPES.join(",")}
                 invalid={fieldState.invalid}
                 onPick={(file) =>
                   form.setValue("photo", file, { shouldValidate: true })
@@ -130,65 +135,6 @@ function PhotoForm({
         </Button>
       </div>
     </form>
-  )
-}
-
-// Click to browse or drop a file onto it. The input stays focusable for
-// keyboard users, and the label shows its focus ring.
-function PhotoDropzone({
-  invalid,
-  onPick,
-}: {
-  invalid: boolean
-  onPick: (file: File) => void
-}) {
-  const [dragging, setDragging] = useState(false)
-
-  return (
-    <label
-      htmlFor="staff-photo"
-      onDragOver={(event) => {
-        event.preventDefault()
-        setDragging(true)
-      }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={(event) => {
-        event.preventDefault()
-        setDragging(false)
-        const file = event.dataTransfer.files[0]
-        if (file) onPick(file)
-      }}
-      className={cn(
-        "flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors hover:bg-muted/50 has-focus-visible:ring-3 has-focus-visible:ring-ring/50",
-        dragging && "border-brand bg-brand-soft",
-        invalid && "border-destructive"
-      )}
-    >
-      <span className="flex size-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
-        <ImageUpIcon className="size-5" />
-      </span>
-      <span className="space-y-1">
-        <span className="block text-sm font-medium">
-          Drag a photo here, or{" "}
-          <span className="text-brand-ink underline-offset-4 hover:underline">
-            browse
-          </span>
-        </span>
-        <span className="block text-xs text-muted-foreground">
-          JPG, PNG or WebP, up to {PHOTO_MAX_MB} MB
-        </span>
-      </span>
-      <input
-        id="staff-photo"
-        type="file"
-        accept={PHOTO_TYPES.join(",")}
-        className="sr-only"
-        onChange={(event) => {
-          const file = event.target.files?.[0]
-          if (file) onPick(file)
-        }}
-      />
-    </label>
   )
 }
 

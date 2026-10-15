@@ -4,12 +4,14 @@ import { axiosInstance } from "@/lib/axios"
 import type { EmergencyContactValues } from "@/lib/schemas/emergency-contact"
 import {
   lifeCoverAmounts,
+  type StaffDocumentValues,
   type StaffProfileValues,
   type StaffValues,
 } from "@/lib/schemas/staff"
 import type {
   EmergencyContact,
   StaffFilters,
+  StaffDocument,
   StaffMember,
   StaffPhoto,
 } from "@/lib/types"
@@ -22,6 +24,8 @@ export const staffKeys = {
   emergencyContacts: (staffId: string) =>
     ["staff", "detail", staffId, "emergency-contacts"] as const,
   photo: (staffId: string) => ["staff", "detail", staffId, "photo"] as const,
+  documents: (staffId: string) =>
+    ["staff", "detail", staffId, "documents"] as const,
 }
 
 // Only active staff are listed; axios drops an unset location from the URL
@@ -141,4 +145,26 @@ export async function fetchStaffPhoto(staffId: string) {
     if (isAxiosError(error) && error.response?.status === 404) return null
     throw error
   }
+}
+
+export async function fetchStaffDocuments(staffId: string) {
+  const response = await axiosInstance.get<StaffDocument[]>(
+    `/staff/staff/${staffId}/documents`
+  )
+  return response.data
+}
+
+export async function deleteStaffDocument(staffId: string, documentId: string) {
+  await axiosInstance.delete(`/staff/staff/${staffId}/documents/${documentId}`)
+}
+
+// Multipart form data; the API expects the category in lowercase
+export async function uploadStaffDocument(
+  staffId: string,
+  values: StaffDocumentValues
+) {
+  const body = new FormData()
+  body.append("file", values.file)
+  body.append("category", values.category.toLowerCase())
+  await axiosInstance.post(`/staff/staff/${staffId}/documents`, body)
 }

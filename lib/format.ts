@@ -43,3 +43,12 @@ export function formatAmount(amount: number) {
     amount
   )
 }
+
+// "840 KB", "2.4 MB"; file sizes in bytes, rounded for display
+export function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`
+  const megabytes = new Intl.NumberFormat("en-KE", {
+    maximumFractionDigits: 1,
+  }).format(bytes / (1024 * 1024))
+  return `${megabytes} MB`
+}

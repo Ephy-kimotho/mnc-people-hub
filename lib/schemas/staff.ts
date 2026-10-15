@@ -1,6 +1,8 @@
 import { isFuture, parseISO } from "date-fns"
 import { z } from "zod"
 
+import type { DocumentCategory } from "@/lib/types"
+
 // Kenyan mobile numbers: 07xx / 01xx or +254 7xx, spaces allowed
 export const KENYAN_PHONE = /^(?:\+254|0)\s?[17]\d{2}\s?\d{3}\s?\d{3}$/
 
@@ -89,3 +91,37 @@ export const staffPhotoSchema = z.object({
 })
 
 export type StaffPhotoValues = z.infer<typeof staffPhotoSchema>
+
+const documentCategories = [
+  "NationalID",
+  "Passport",
+  "DriversLicence",
+  "Contract",
+  "NSSF",
+  "SHA",
+  "KRA",
+  "CV",
+  "RecommendationLetter",
+  "Other",
+] as const satisfies readonly DocumentCategory[]
+
+// PDFs, Word files and photos or scans of documents
+export const DOCUMENT_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]
+export const DOCUMENT_MAX_MB = 10
+
+export const staffDocumentSchema = z.object({
+  category: z.enum(documentCategories, "Select a category"),
+  file: z
+    .file("Choose a file to upload")
+    .mime(DOCUMENT_TYPES, "Use a PDF, Word document or image")
+    .max(DOCUMENT_MAX_MB * 1024 * 1024, `Keep it under ${DOCUMENT_MAX_MB} MB`),
+})
+
+export type StaffDocumentValues = z.infer<typeof staffDocumentSchema>

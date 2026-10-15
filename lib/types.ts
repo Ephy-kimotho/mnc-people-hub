@@ -112,6 +112,40 @@ export type StaffMember = {
   auth_role: RoleName | null
 }
 
+// The backend's document categories. They're sent lowercased.
+export type DocumentCategory =
+  | "NationalID"
+  | "Passport"
+  | "DriversLicence"
+  | "Contract"
+  | "NSSF"
+  | "SHA"
+  | "KRA"
+  | "CV"
+  | "RecommendationLetter"
+  | "Other"
+
+// A file in GET /staff/staff/{id}/documents. `public_url` can be opened
+// without signing in; `uploaded_by` is a user id.
+export type StaffDocument = {
+  document_id: string
+  staff_id: string
+  staff_name: string
+  category: DocumentCategory
+  label: string | null
+  filename: string
+  mime_type: string
+  file_size_bytes: number
+  storage_path: string
+  public_url: string
+  restricted: boolean
+  expiry_date: string | null
+  notes: string | null
+  uploaded_by: string
+  uploaded_at: string
+  updated_at: string
+}
+
 // GET /staff/staff/{id}/photo: a signed storage URL that stops working
 // after `expires_in` seconds
 export type StaffPhoto = {
