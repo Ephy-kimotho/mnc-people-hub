@@ -29,9 +29,12 @@ export function formatISODate(date: Date) {
   return format(date, "yyyy-MM-dd")
 }
 
-// "1 Day", "5 Days"
+// "1 Day", "5 Days", "0.44 Days"; fractions come from half days and hours
 export function formatDayCount(days: number) {
-  return `${days} ${days === 1 ? "Day" : "Days"}`
+  const count = new Intl.NumberFormat("en-KE", {
+    maximumFractionDigits: 2,
+  }).format(days)
+  return `${count} ${days === 1 ? "Day" : "Days"}`
 }
 
 // "1,000,000"; whole shilling amounts without a currency symbol

@@ -2,6 +2,12 @@ export type LeaveType = "annual" | "sick" | "emergency" | "unpaid"
 
 export type LeaveStatus = "pending" | "approved" | "rejected" | "recalled"
 
+// How much of a day a request covers; see "Leave Duration Types" in
+// SYSTEM_ACCESS.md
+export type DurationType = "full_day" | "half_day" | "hours"
+
+export type HalfDayPeriod = "AM" | "PM"
+
 export type Location = {
   id: string
   name: string
@@ -106,6 +112,13 @@ export type StaffMember = {
   auth_role: RoleName | null
 }
 
+// GET /staff/staff/{id}/photo: a signed storage URL that stops working
+// after `expires_in` seconds
+export type StaffPhoto = {
+  url: string
+  expires_in: number
+}
+
 // An emergency contact as returned by GET /staff/staff/{id}/emergency-contacts
 export type EmergencyContact = {
   contact_id: string
@@ -121,16 +134,106 @@ export type StaffFilters = {
   location?: string
 }
 
-// Dates are ISO strings (yyyy-MM-dd); start and end are both inclusive
+// Query params for GET /leave/leaves; unset ones are left out of the URL
+export type LeaveFilters = {
+  staff_id?: string
+  status?: LeaveStatus
+  leave_type?: LeaveType
+  year?: number
+  duration_type?: DurationType
+}
+
+// A leave request as GET /leave/leaves returns it. Types and statuses are
+// capitalised ("Annual", "Pending"), times are "HH:mm:ss" and timestamps
+// look like "2026-10-14 14:06:26.581789+00:00".
+export type LeaveRecord = {
+  request_id: string
+  staff_id: string
+  staff_name: string
+  staff_role: string
+  // The location's name, not its id
+  work_location: string | null
+  leave_type: string
+  start_date: string
+  end_date: string
+  duration_type: DurationType
+  half_day_period: HalfDayPeriod | null
+  duration_hours: number | null
+  start_time: string | null
+  end_time: string | null
+  // Working days the request uses up, worked out by the server
+  days: number
+  reason: string | null
+  status: string
+  submitted_by: string
+  submitted_at: string
+  reviewed_by: string | null
+  reviewed_at: string | null
+  // The approver's or rejecter's note
+  review_note: string | null
+  recalled_by: string | null
+  recalled_at: string | null
+  recall_reason: string | null
+  balance_before: number | null
+  document_url: string | null
+  document_path: string | null
+  document_name: string | null
+  created_at: string
+}
+
+// One leave type's balance for a year, from GET /staff/staff/{id}/leave-balance.
+// `leave_type` is capitalised ("Annual") like on LeaveRecord.
+export type LeaveBalanceRecord = {
+  balance_id: string
+  staff_id: string
+  year: number
+  leave_type: string
+  entitlement_days: number
+  days_used: number
+  days_approved: number
+  days_pending: number
+  days_remaining: number
+}
+
+// The app's view of a leave request, mapped from LeaveRecord in
+// lib/api/leaves.ts. Dates are ISO strings (yyyy-MM-dd), both inclusive.
+// Times are "HH:mm". `days` is what the request uses up, e.g. 0.5.
 export type LeaveRequest = {
   id: string
   staffId: string
+  staffName: string
+  staffRole: string
   type: LeaveType
   startDate: string
   endDate: string
   days: number
   status: LeaveStatus
+  durationType: DurationType
+  halfDayPeriod?: HalfDayPeriod
+  durationHours?: number
+  startTime?: string
+  endTime?: string
   reason?: string
   rejectionReason?: string
   createdAt: string
+}
+
+// A staff member's leave as the dashboard lists it. `leave_type` is
+// capitalised ("Annual") and `work_location` is the location's name.
+export type DashboardLeave = {
+  staff_name: string
+  staff_role: string
+  work_location: string | null
+  leave_type: string
+  start_date: string
+  end_date: string
+}
+
+// GET /mnc/dashboard
+export type DashboardSummary = {
+  total_staff: number
+  active_staff: number
+  on_leave_today: DashboardLeave[]
+  pending_leave_requests: number
+  upcoming_leave: DashboardLeave[]
 }

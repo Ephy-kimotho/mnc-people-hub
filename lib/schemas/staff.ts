@@ -77,3 +77,15 @@ export const staffProfileSchema = staffSchema.extend({
 })
 
 export type StaffProfileValues = z.infer<typeof staffProfileSchema>
+
+export const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"]
+export const PHOTO_MAX_MB = 5
+
+export const staffPhotoSchema = z.object({
+  photo: z
+    .file("Choose a photo to upload")
+    .mime(PHOTO_TYPES, "Use a JPG, PNG or WebP image")
+    .max(PHOTO_MAX_MB * 1024 * 1024, `Keep it under ${PHOTO_MAX_MB} MB`),
+})
+
+export type StaffPhotoValues = z.infer<typeof staffPhotoSchema>

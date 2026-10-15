@@ -1,7 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Loader2Icon } from "lucide-react"
 import { Controller, useForm } from "react-hook-form"
+import toast from "react-hot-toast"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -14,25 +17,28 @@ import {
 } from "@/components/ui/dialog"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Textarea } from "@/components/ui/textarea"
+import { getErrorMessage } from "@/lib/api/errors"
+import { leaveKeys, rejectLeaveRequest } from "@/lib/api/leaves"
 import {
   REASON_MAX,
   rejectLeaveSchema,
   type RejectLeaveValues,
 } from "@/lib/schemas/leave"
+import type { LeaveRequest } from "@/lib/types"
 
 type RejectLeaveDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  name?: string
-  onReject: (reason: string) => void
+  request?: LeaveRequest
 }
 
 export function RejectLeaveDialog({
   open,
   onOpenChange,
-  name,
-  onReject,
+  request,
 }: RejectLeaveDialogProps) {
+  const name = request?.staffName
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="gap-0 rounded-2xl p-0">
@@ -45,15 +51,40 @@ export function RejectLeaveDialog({
           </DialogDescription>
         </DialogHeader>
         {/* Radix unmounts the content when closed, so the form starts fresh each time */}
-        <RejectLeaveForm onReject={onReject} />
+        {request && (
+          <RejectLeaveForm
+            request={request}
+            onDone={() => onOpenChange(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   )
 }
 
 function RejectLeaveForm({
-  onReject,
-}: Pick<RejectLeaveDialogProps, "onReject">) {
+  request,
+  onDone,
+}: {
+  request: LeaveRequest
+  onDone: () => void
+}) {
+  const queryClient = useQueryClient()
+  const name = request.staffName
+
+  const mutation = useMutation({
+    mutationFn: (values: RejectLeaveValues) =>
+      rejectLeaveRequest(request.id, values.reason),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: leaveKeys.all })
+      toast.success(`Leave rejected for ${name}`)
+      onDone()
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, `Couldn't reject ${name}'s leave.`))
+    },
+  })
+
   const form = useForm<RejectLeaveValues>({
     resolver: zodResolver(rejectLeaveSchema),
     defaultValues: { reason: "" },
@@ -61,7 +92,7 @@ function RejectLeaveForm({
 
   return (
     <form
-      onSubmit={form.handleSubmit((values) => onReject(values.reason))}
+      onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
       className="space-y-5 px-6 py-5"
       noValidate
     >
@@ -89,12 +120,23 @@ function RejectLeaveForm({
 
       <div className="grid grid-cols-2 gap-3 pt-1">
         <DialogClose asChild>
-          <Button type="button" variant="outline" className="h-11 rounded-xl">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={mutation.isPending}
+            className="h-11 rounded-xl"
+          >
             Cancel
           </Button>
         </DialogClose>
-        <Button type="submit" variant="destructive" className="h-11 rounded-xl">
-          Reject Request
+        <Button
+          type="submit"
+          variant="destructive"
+          disabled={mutation.isPending}
+          className="h-11 rounded-xl"
+        >
+          {mutation.isPending && <Loader2Icon className="animate-spin" />}
+          {mutation.isPending ? "Rejecting…" : "Reject Request"}
         </Button>
       </div>
     </form>

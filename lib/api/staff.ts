@@ -1,3 +1,5 @@
+import { isAxiosError } from "axios"
+
 import { axiosInstance } from "@/lib/axios"
 import type { EmergencyContactValues } from "@/lib/schemas/emergency-contact"
 import {
@@ -5,7 +7,12 @@ import {
   type StaffProfileValues,
   type StaffValues,
 } from "@/lib/schemas/staff"
-import type { EmergencyContact, StaffFilters, StaffMember } from "@/lib/types"
+import type {
+  EmergencyContact,
+  StaffFilters,
+  StaffMember,
+  StaffPhoto,
+} from "@/lib/types"
 
 // Every staff query shares this prefix, so one invalidation refreshes them all
 export const staffKeys = {
@@ -14,6 +21,7 @@ export const staffKeys = {
   detail: (staffId: string) => ["staff", "detail", staffId] as const,
   emergencyContacts: (staffId: string) =>
     ["staff", "detail", staffId, "emergency-contacts"] as const,
+  photo: (staffId: string) => ["staff", "detail", staffId, "photo"] as const,
 }
 
 // Only active staff are listed; axios drops an unset location from the URL
@@ -98,4 +106,39 @@ export async function createEmergencyContact(
 
 export async function deleteEmergencyContact(contactId: string) {
   await axiosInstance.delete(`/staff/emergency-contacts/${contactId}`)
+}
+
+// A 404 means there was no photo to delete, which is fine
+export async function deleteStaffPhoto(staffId: string) {
+  try {
+    await axiosInstance.delete(`/staff/staff/${staffId}/photo`)
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 404) return
+    throw error
+  }
+}
+
+// Sent as multipart form data; axios sets the boundary header itself
+export async function uploadStaffPhoto(staffId: string, photo: File) {
+  const body = new FormData()
+  body.append("file", photo)
+  const response = await axiosInstance.post<StaffMember>(
+    `/staff/staff/${staffId}/photo`,
+    body
+  )
+  return response.data
+}
+
+// A short-lived signed link to the photo in storage, with its lifetime in
+// seconds. A 404 means no photo has been uploaded.
+export async function fetchStaffPhoto(staffId: string) {
+  try {
+    const response = await axiosInstance.get<StaffPhoto>(
+      `/staff/staff/${staffId}/photo`
+    )
+    return response.data
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 404) return null
+    throw error
+  }
 }

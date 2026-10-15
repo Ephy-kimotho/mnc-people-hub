@@ -33,7 +33,7 @@ There is no test runner configured yet.
 - Brand assets (logos, favicon, OG image) are in `public/images/`.
 - Domain types are in `lib/types.ts` and leave helpers (labels, `isOnLeave`) are in `lib/leave.ts`. Pages read placeholder data from `lib/mock-data.ts` until a backend exists.
 - Components are grouped by feature: `components/dashboard/` (shell, `PageHeader`, `Eyebrow`), `components/leave/` (status badge, add-to-calendar menu), and one folder per page (e.g. `components/overview/`).
-- Theme colors beyond shadcn's: `brand` / `brand-soft` / `brand-ink` (gold accents and eyebrow labels) and `success` / `success-soft` (approved states).
+- Theme colors beyond shadcn's: `brand` / `brand-soft` / `brand-ink` (gold accents and eyebrow labels), `success` / `success-soft` (approved states) and `warning` (pending amounts).
 
 ## Conventions
 

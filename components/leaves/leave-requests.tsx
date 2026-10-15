@@ -4,21 +4,28 @@ import { useState } from "react"
 
 import { PageHeader } from "@/components/dashboard/page-header"
 import { LeaveStatusBadge } from "@/components/leave/leave-status-badge"
+import { ApproveLeaveDialog } from "@/components/leaves/approve-leave-dialog"
 import { EditLeaveDialog } from "@/components/leaves/edit-leave-dialog"
 import { LeaveRowActions } from "@/components/leaves/leave-row-actions"
 import { RecallLeaveDialog } from "@/components/leaves/recall-leave-dialog"
 import { RejectLeaveDialog } from "@/components/leaves/reject-leave-dialog"
+import { TablePagination } from "@/components/table-pagination"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useLeaveRequests } from "@/hooks/use-leave-requests"
+import { usePagination } from "@/hooks/use-pagination"
+import { getErrorMessage } from "@/lib/api/errors"
 import { formatDateRange } from "@/lib/format"
-import { leaveTypeLabels, workingDays } from "@/lib/leave"
+import { durationLabel, leaveDays, leaveTypeLabels } from "@/lib/leave"
 import type { LeaveRequestValues } from "@/lib/schemas/leave"
-import type { LeaveRequest, LeaveStatus, Staff } from "@/lib/types"
+import type { LeaveRequest, LeaveStatus } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 type Tab = LeaveStatus | "all"
-type DialogKind = "edit" | "reject" | "recall"
+type DialogKind = "approve" | "edit" | "reject" | "recall"
 
 const tabs: { value: Tab; label: string; empty: string }[] = [
   {
@@ -36,23 +43,22 @@ const tabs: { value: Tab; label: string; empty: string }[] = [
 const columns =
   "@3xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.8fr)_3rem] @3xl:gap-x-4"
 
-// Changes live in local state until there's a backend to save to
-export function LeaveRequests({
-  initialRequests,
-  staff,
-}: {
-  initialRequests: LeaveRequest[]
-  staff: Staff[]
-}) {
-  const [requests, setRequests] = useState(initialRequests)
+type LeaveQuery = ReturnType<typeof useLeaveRequests>
+
+// Edits are kept as local changes on top of the fetched requests until
+// their endpoint is wired up. Approve, reject and recall hit the API.
+export function LeaveRequests() {
+  const leaveQuery = useLeaveRequests()
+  const [changes, setChanges] = useState<Record<string, Partial<LeaveRequest>>>(
+    {}
+  )
   const [openDialog, setOpenDialog] = useState<DialogKind | null>(null)
   const [selected, setSelected] = useState<LeaveRequest>()
 
-  const staffById = new Map(staff.map((s) => [s.id, s]))
-  const selectedName = selected && staffById.get(selected.staffId)?.name
-  const sorted = [...requests].sort((a, b) =>
-    b.createdAt.localeCompare(a.createdAt)
-  )
+  const selectedName = selected?.staffName
+  const sorted = (leaveQuery.data ?? [])
+    .map((r) => ({ ...r, ...changes[r.id] }))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
   function open(kind: DialogKind, request: LeaveRequest) {
     setSelected(request)
@@ -63,27 +69,19 @@ export function LeaveRequests({
     if (!isOpen) setOpenDialog(null)
   }
 
-  function update(id: string, changes: Partial<LeaveRequest>) {
-    setRequests((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, ...changes } : r))
-    )
+  function update(id: string, change: Partial<LeaveRequest>) {
+    setChanges((prev) => ({ ...prev, [id]: { ...prev[id], ...change } }))
   }
 
-  function saveEdit({ type, startDate, endDate, reason }: LeaveRequestValues) {
+  function saveEdit(values: LeaveRequestValues) {
     if (!selected) return
     update(selected.id, {
-      type,
-      startDate,
-      endDate,
-      reason: reason || undefined,
-      days: workingDays(startDate, endDate),
+      type: values.type,
+      startDate: values.startDate,
+      endDate: values.endDate,
+      reason: values.reason || undefined,
+      days: leaveDays(values),
     })
-    setOpenDialog(null)
-  }
-
-  function rejectSelected(reason: string) {
-    if (!selected) return
-    update(selected.id, { status: "rejected", rejectionReason: reason })
     setOpenDialog(null)
   }
 
@@ -111,116 +109,26 @@ export function LeaveRequests({
             </TabsList>
           </div>
 
-          {tabs.map((tab) => {
-            const rows = sorted.filter(
-              (r) => tab.value === "all" || r.status === tab.value
-            )
-            return (
-              <TabsContent key={tab.value} value={tab.value}>
-                <div
-                  className={cn(
-                    "hidden border-b bg-muted/50 px-6 py-3 text-[0.7rem] font-medium tracking-[0.14em] text-muted-foreground uppercase @3xl:grid",
-                    columns
-                  )}
-                >
-                  <span>Staff member</span>
-                  <span>Request details</span>
-                  <span>Dates &amp; duration</span>
-                  <span>Status</span>
-                  <span className="text-right">Actions</span>
-                </div>
-
-                {rows.length === 0 ? (
-                  <p className="px-6 py-12 text-center text-sm text-muted-foreground">
-                    {tab.empty}
-                  </p>
-                ) : (
-                  <ul className="divide-y">
-                    {rows.map((request) => {
-                      const member = staffById.get(request.staffId)
-                      const name = member?.name ?? "Former staff"
-                      const type = `${leaveTypeLabels[request.type]} Leave`
-                      return (
-                        <li
-                          key={request.id}
-                          className={cn(
-                            "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 px-4 py-4 @3xl:px-6",
-                            columns
-                          )}
-                        >
-                          <div className="min-w-0">
-                            <p className="font-semibold">{name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {member?.role ?? "—"}
-                            </p>
-                          </div>
-
-                          {/* Actions sit beside the name on mobile and move last on wide cards */}
-                          <div className="justify-self-end @3xl:order-last">
-                            <LeaveRowActions
-                              name={name}
-                              status={request.status}
-                              event={{
-                                title: `${name} – ${type}`,
-                                description: member?.role,
-                                start: request.startDate,
-                                end: request.endDate,
-                              }}
-                              onApprove={() =>
-                                update(request.id, { status: "approved" })
-                              }
-                              onReject={() => open("reject", request)}
-                              onEdit={() => open("edit", request)}
-                              onRecall={() => open("recall", request)}
-                            />
-                          </div>
-
-                          {/* Narrow cards wrap these three cells under the name */}
-                          <div className="col-span-full flex flex-wrap items-center gap-x-4 gap-y-2 @3xl:contents">
-                            <div>
-                              <Badge variant="secondary" className="h-6 px-2.5">
-                                {type}
-                              </Badge>
-                            </div>
-                            <div className="space-y-1">
-                              <p className="text-sm">
-                                {formatDateRange(
-                                  request.startDate,
-                                  request.endDate
-                                )}
-                              </p>
-                              <Badge
-                                variant="secondary"
-                                className="rounded-md font-normal"
-                              >
-                                {request.days} working{" "}
-                                {request.days === 1 ? "day" : "days"}
-                              </Badge>
-                            </div>
-                            <div className="min-w-0 space-y-1">
-                              <LeaveStatusBadge status={request.status} />
-                              {request.status === "rejected" &&
-                                request.rejectionReason && (
-                                  <p
-                                    title={request.rejectionReason}
-                                    className="line-clamp-2 text-xs text-muted-foreground"
-                                  >
-                                    {request.rejectionReason}
-                                  </p>
-                                )}
-                            </div>
-                          </div>
-                        </li>
-                      )
-                    })}
-                  </ul>
+          {tabs.map((tab) => (
+            <TabsContent key={tab.value} value={tab.value}>
+              <LeaveTable
+                query={leaveQuery}
+                rows={sorted.filter(
+                  (r) => tab.value === "all" || r.status === tab.value
                 )}
-              </TabsContent>
-            )
-          })}
+                empty={tab.empty}
+                onOpen={open}
+              />
+            </TabsContent>
+          ))}
         </Tabs>
       </Card>
 
+      <ApproveLeaveDialog
+        open={openDialog === "approve"}
+        onOpenChange={closeDialog}
+        request={selected}
+      />
       <EditLeaveDialog
         open={openDialog === "edit"}
         onOpenChange={closeDialog}
@@ -231,17 +139,149 @@ export function LeaveRequests({
       <RejectLeaveDialog
         open={openDialog === "reject"}
         onOpenChange={closeDialog}
-        name={selectedName}
-        onReject={rejectSelected}
+        request={selected}
       />
       <RecallLeaveDialog
         open={openDialog === "recall"}
         onOpenChange={closeDialog}
-        name={selectedName}
-        onConfirm={() =>
-          selected && update(selected.id, { status: "recalled" })
-        }
+        request={selected}
       />
     </div>
+  )
+}
+
+// One tab's table. Radix unmounts inactive tabs, so switching tabs starts
+// the pagination back on page 1.
+function LeaveTable({
+  query,
+  rows,
+  empty,
+  onOpen,
+}: {
+  query: LeaveQuery
+  rows: LeaveRequest[]
+  empty: string
+  onOpen: (kind: DialogKind, request: LeaveRequest) => void
+}) {
+  const pagination = usePagination(rows)
+
+  return (
+    <>
+      <div
+        className={cn(
+          "hidden border-b bg-muted/50 px-6 py-3 text-[0.7rem] font-medium tracking-[0.14em] text-muted-foreground uppercase @3xl:grid",
+          columns
+        )}
+      >
+        <span>Staff member</span>
+        <span>Request details</span>
+        <span>Dates &amp; duration</span>
+        <span>Status</span>
+        <span className="text-right">Actions</span>
+      </div>
+
+      {query.isPending ? (
+        <ul className="divide-y">
+          {Array.from({ length: 5 }, (_, i) => (
+            <li key={i} className="space-y-2 px-4 py-4 @3xl:px-6">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-24" />
+            </li>
+          ))}
+        </ul>
+      ) : query.isError ? (
+        <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
+          <p className="text-sm text-muted-foreground">
+            {getErrorMessage(query.error, "Couldn't load leave requests.")}
+          </p>
+          <Button
+            variant="outline"
+            className="h-10 rounded-full px-5"
+            onClick={() => query.refetch()}
+          >
+            Try again
+          </Button>
+        </div>
+      ) : rows.length === 0 ? (
+        <p className="px-6 py-12 text-center text-sm text-muted-foreground">
+          {empty}
+        </p>
+      ) : (
+        <ul className="divide-y">
+          {pagination.pageItems.map((request) => {
+            const name = request.staffName
+            const type = `${leaveTypeLabels[request.type]} Leave`
+            return (
+              <li
+                key={request.id}
+                className={cn(
+                  "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 px-4 py-4 @3xl:px-6",
+                  columns
+                )}
+              >
+                <div className="min-w-0">
+                  <p className="font-semibold">{name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {request.staffRole}
+                  </p>
+                </div>
+
+                {/* Actions sit beside the name on mobile and move last on wide cards */}
+                <div className="justify-self-end @3xl:order-last">
+                  <LeaveRowActions
+                    name={name}
+                    status={request.status}
+                    event={{
+                      title: `${name} – ${type}`,
+                      description: request.staffRole,
+                      start: request.startDate,
+                      end: request.endDate,
+                    }}
+                    onApprove={() => onOpen("approve", request)}
+                    onReject={() => onOpen("reject", request)}
+                    onEdit={() => onOpen("edit", request)}
+                    onRecall={() => onOpen("recall", request)}
+                  />
+                </div>
+
+                {/* Narrow cards wrap these three cells under the name */}
+                <div className="col-span-full flex flex-wrap items-center gap-x-4 gap-y-2 @3xl:contents">
+                  <div>
+                    <Badge variant="secondary" className="h-6 px-2.5">
+                      {type}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm">
+                      {formatDateRange(request.startDate, request.endDate)}
+                    </p>
+                    <Badge
+                      variant="secondary"
+                      className="rounded-md font-normal"
+                    >
+                      {durationLabel(request)}
+                    </Badge>
+                  </div>
+                  <div className="min-w-0 space-y-1">
+                    <LeaveStatusBadge status={request.status} />
+                    {request.status === "rejected" &&
+                      request.rejectionReason && (
+                        <p
+                          title={request.rejectionReason}
+                          className="line-clamp-2 text-xs text-muted-foreground"
+                        >
+                          {request.rejectionReason}
+                        </p>
+                      )}
+                  </div>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
+      <TablePagination pagination={pagination} label="requests" />
+    </>
   )
 }

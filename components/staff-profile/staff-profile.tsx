@@ -84,7 +84,7 @@ function ProfileLayout({ staff }: { staff: StaffMember }) {
       </div>
 
       <div className="space-y-6">
-        <LeaveBalance />
+        <LeaveBalance staffId={staff.staff_id} />
         <LifeCoverCard staff={staff} />
         <DocumentsCard />
 
@@ -98,7 +98,9 @@ function ProfileLayout({ staff }: { staff: StaffMember }) {
             </p>
           </div>
           <Button asChild className="h-12 shrink-0 rounded-xl px-6 text-base">
-            <Link href="/submit-leave">Submit Request</Link>
+            <Link href={`/submit-leave?staff=${staff.staff_id}`}>
+              Submit Request
+            </Link>
           </Button>
         </div>
       </div>

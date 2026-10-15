@@ -1,6 +1,5 @@
 "use client"
 
-import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { MapPinIcon, PlusIcon, SearchIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -24,8 +23,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLocations } from "@/hooks/use-locations"
 import { usePagination } from "@/hooks/use-pagination"
+import { useStaff } from "@/hooks/use-staff"
 import { getErrorMessage } from "@/lib/api/errors"
-import { fetchStaff, staffKeys } from "@/lib/api/staff"
 import { formatDate } from "@/lib/format"
 import type { StaffFilters, StaffMember } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -49,12 +48,7 @@ export function StaffDirectory() {
     location: locationFilter === "all" ? undefined : locationFilter,
   }
 
-  // Keep the current rows on screen while another location loads
-  const staffQuery = useQuery({
-    queryKey: staffKeys.list(filters),
-    queryFn: () => fetchStaff(filters),
-    placeholderData: keepPreviousData,
-  })
+  const staffQuery = useStaff(filters)
 
   // The server filters by location too, but it also returns staff with no
   // location, so rows are checked against the selected location's name here

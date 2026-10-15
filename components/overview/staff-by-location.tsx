@@ -1,35 +1,96 @@
+"use client"
+
 import { MapPinIcon } from "lucide-react"
+import Link from "next/link"
 
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useLocations } from "@/hooks/use-locations"
+import { getErrorMessage } from "@/lib/api/errors"
 
-type LocationCount = { id: string; name: string; count: number }
+// Shares the locations page's cached query, so names and counts always match
+export function StaffByLocation() {
+  const query = useLocations()
 
-export function StaffByLocation({ items }: { items: LocationCount[] }) {
   return (
     <section className="space-y-3">
       <h2 className="flex items-center gap-2 font-heading font-semibold">
         <MapPinIcon className="size-4 text-brand-ink" />
         Staff by location
       </h2>
-      <div className="grid gap-4 lg:grid-cols-2">
-        {items.map((item) => (
-          <Card
-            key={item.id}
-            className="flex-row items-center gap-4 rounded-2xl px-5 shadow-xs"
+      {query.isPending ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {Array.from({ length: 2 }, (_, i) => (
+            <Card
+              key={i}
+              className="flex-row items-center gap-4 rounded-2xl px-5 shadow-xs"
+            >
+              <Skeleton className="size-10 rounded-xl" />
+              <Skeleton className="h-4 flex-1" />
+              <Skeleton className="h-8 w-10" />
+            </Card>
+          ))}
+        </div>
+      ) : query.isError ? (
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed py-10 text-center">
+          <p className="text-sm text-muted-foreground">
+            {getErrorMessage(query.error, "Couldn't load locations.")}
+          </p>
+          <Button
+            variant="outline"
+            className="h-10 rounded-full px-5"
+            onClick={() => query.refetch()}
           >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-ink">
-              <MapPinIcon className="size-4" />
-            </span>
-            <p className="flex-1 font-medium">{item.name}</p>
-            <div className="text-right">
-              <p className="font-heading text-2xl leading-none font-bold">
-                {item.count}
-              </p>
-              <p className="text-xs text-muted-foreground">staff</p>
-            </div>
-          </Card>
-        ))}
-      </div>
+            Try again
+          </Button>
+        </div>
+      ) : query.data.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed py-10 text-center text-sm text-muted-foreground">
+          No locations yet.
+          <Link
+            href="/locations"
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            Add one on the Locations page
+          </Link>
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {query.data.map((location) => (
+            <Card
+              key={location.location_id}
+              className="flex-row items-center gap-4 rounded-2xl px-5 shadow-xs"
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-ink">
+                <MapPinIcon className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="flex flex-wrap items-center gap-2 font-medium wrap-break-word">
+                  {location.name}
+                  {!location.active && (
+                    <Badge className="bg-muted text-muted-foreground">
+                      Inactive
+                    </Badge>
+                  )}
+                </p>
+                {location.address && (
+                  <p className="text-xs wrap-break-word text-muted-foreground">
+                    {location.address}
+                  </p>
+                )}
+              </div>
+              <div className="text-right">
+                <p className="font-heading text-2xl leading-none font-bold">
+                  {location.staff_count}
+                </p>
+                <p className="text-xs text-muted-foreground">staff</p>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </section>
   )
 }

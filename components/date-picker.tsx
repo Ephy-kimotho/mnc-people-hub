@@ -21,6 +21,7 @@ type DatePickerProps = {
   onChange: (value: string) => void
   placeholder?: string
   invalid?: boolean
+  disabled?: boolean
   // Days before this ISO date can't be picked
   minDate?: string
   // Range shown in the month/year dropdowns
@@ -35,6 +36,7 @@ export function DatePicker({
   onChange,
   placeholder = "Pick a date",
   invalid,
+  disabled,
   minDate,
   startMonth = new Date(2000, 0),
   endMonth = endOfYear(addYears(new Date(), 2)),
@@ -51,6 +53,7 @@ export function DatePicker({
           type="button"
           variant="outline"
           aria-invalid={invalid}
+          disabled={disabled}
           className={cn(
             "w-full justify-between font-normal data-[empty=true]:text-muted-foreground",
             className

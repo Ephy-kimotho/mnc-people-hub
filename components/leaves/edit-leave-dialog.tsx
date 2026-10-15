@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { leaveTypeLabels } from "@/lib/leave"
+import { halfDayTimes, leaveTypeLabels } from "@/lib/leave"
 import {
   REASON_MAX,
   leaveRequestSchema,
@@ -78,8 +78,13 @@ function EditLeaveForm({
     defaultValues: {
       staffId: request.staffId,
       type: request.type,
+      // Not editable here, but the schema checks them against the dates
+      durationType: request.durationType,
+      halfDayPeriod: request.halfDayPeriod ?? "AM",
       startDate: request.startDate,
       endDate: request.endDate,
+      startTime: request.startTime ?? halfDayTimes.AM.startTime,
+      endTime: request.endTime ?? halfDayTimes.PM.endTime,
       reason: request.reason ?? "",
     },
   })

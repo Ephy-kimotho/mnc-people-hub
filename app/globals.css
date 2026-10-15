@@ -29,6 +29,7 @@
   --brand-ink: oklch(0.55 0.1 75);
   --success: oklch(0.5 0.09 155);
   --success-soft: oklch(0.94 0.03 155);
+  --warning: oklch(0.64 0.15 55);
   --chart-1: oklch(0.837 0.128 66.29);
   --chart-2: oklch(0.705 0.213 47.604);
   --chart-3: oklch(0.646 0.222 41.116);
@@ -70,6 +71,7 @@
   --brand-ink: oklch(0.8 0.1 82);
   --success: oklch(0.78 0.11 155);
   --success-soft: oklch(0.3 0.05 155);
+  --warning: oklch(0.8 0.13 65);
   --chart-1: oklch(0.837 0.128 66.29);
   --chart-2: oklch(0.705 0.213 47.604);
   --chart-3: oklch(0.646 0.222 41.116);
@@ -102,6 +104,7 @@
   --color-brand-ink: var(--brand-ink);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
