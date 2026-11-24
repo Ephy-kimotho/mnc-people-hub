@@ -19,7 +19,7 @@ import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useFxRate, usePropertyDashboard } from "@/hooks/use-properties"
 import { getErrorMessage } from "@/lib/api/errors"
-import { formatCurrency, formatDate } from "@/lib/format"
+import { formatAmount, formatCurrency, formatDate } from "@/lib/format"
 
 type ViewMode = "native" | "kes" | "usd"
 
@@ -29,6 +29,13 @@ export function PropertyDashboard() {
   const [view, setView] = useState<ViewMode>("native")
   const data = query.data
   const rate = fx.data?.rate ?? null
+  const routingRows = data?.routing ?? []
+  const maxRentKes = Math.max(0, ...routingRows.map((row) => row.rent_kes))
+  const maxRentUsd = Math.max(0, ...routingRows.map((row) => row.rent_usd))
+  const maxServiceKes = Math.max(
+    0,
+    ...routingRows.map((row) => row.service_charge_kes)
+  )
 
   function total(kes: number, usd: number) {
     if (!rate) return null
@@ -275,9 +282,15 @@ export function PropertyDashboard() {
                     No active leases to route yet.
                   </p>
                 ) : (
-                  <ul className="mt-3 space-y-3">
+                  <div className="mt-3 space-y-2">
+                    <div className="hidden gap-4 px-4 text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase sm:grid sm:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
+                      <span>Destination</span>
+                      <span>Rent · KES</span>
+                      <span>Rent · USD</span>
+                      <span>Service charge · KES</span>
+                    </div>
                     {data.routing.map((row, index) => (
-                      <li
+                      <div
                         key={row.account_id ?? `unassigned-${index}`}
                         className={
                           row.assigned
@@ -285,7 +298,7 @@ export function PropertyDashboard() {
                             : "rounded-xl border border-amber-300 bg-amber-50/60 px-4 py-3 dark:bg-amber-950/20"
                         }
                       >
-                        <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="grid gap-4 sm:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))] sm:items-end">
                           <div>
                             <p className="text-sm font-medium">
                               {row.assigned
@@ -298,18 +311,28 @@ export function PropertyDashboard() {
                                 : "Destination not assigned"}
                             </p>
                           </div>
-                          <div className="flex flex-wrap gap-4 text-sm">
-                            <span>KES {formatCurrency(row.rent_kes).replace("KES ", "")}</span>
-                            <span>USD {formatCurrency(row.rent_usd, "USD").replace("USD ", "")}</span>
-                            <span>
-                              SC KES{" "}
-                              {formatCurrency(row.service_charge_kes).replace("KES ", "")}
-                            </span>
-                          </div>
+                          <RoutingBar
+                            label="Rent · KES"
+                            value={row.rent_kes}
+                            max={maxRentKes}
+                            tone="bg-brand"
+                          />
+                          <RoutingBar
+                            label="Rent · USD"
+                            value={row.rent_usd}
+                            max={maxRentUsd}
+                            tone="bg-sky-500"
+                          />
+                          <RoutingBar
+                            label="Service charge · KES"
+                            value={row.service_charge_kes}
+                            max={maxServiceKes}
+                            tone="bg-emerald-600"
+                          />
                         </div>
-                      </li>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 )}
                 <p className="mt-3 text-xs text-muted-foreground">
                   Unassigned amounts have no receiving bank account set.
@@ -507,6 +530,34 @@ function BarLine({
         <span className="text-muted-foreground">{label}</span>
         <span className="font-medium">{value}</span>
       </div>
+      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
+        <div
+          className={`h-full rounded-full ${tone}`}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function RoutingBar({
+  label,
+  value,
+  max,
+  tone,
+}: {
+  label: string
+  value: number
+  max: number
+  tone: string
+}) {
+  const percent = max > 0 ? Math.round((value / max) * 100) : 0
+  return (
+    <div className="min-w-0">
+      <p className="text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase sm:hidden">
+        {label}
+      </p>
+      <p className="text-sm font-medium">{formatAmount(value)}</p>
       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
         <div
           className={`h-full rounded-full ${tone}`}
