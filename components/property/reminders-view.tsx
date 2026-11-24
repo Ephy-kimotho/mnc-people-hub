@@ -1,204 +1,359 @@
 "use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { BellIcon, CheckIcon, Loader2Icon, PlusIcon } from "lucide-react"
+import { addMonths, format } from "date-fns"
+import {
+  CalendarDaysIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ScrollTextIcon,
+  UserIcon,
+  WalletIcon,
+} from "lucide-react"
+import Link from "next/link"
 import { useState } from "react"
-import toast from "react-hot-toast"
 
 import { PageHeader } from "@/components/dashboard/page-header"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ReminderDialog } from "@/components/property/reminder-dialog"
-import { useReminders } from "@/hooks/use-properties"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { RentPaymentDialog } from "@/components/property/rent-payment-dialog"
+import { useDepositTopups, useRentCollection } from "@/hooks/use-properties"
 import { getErrorMessage } from "@/lib/api/errors"
-import {
-  completeReminder,
-  deleteReminder,
-  propertyKeys,
-} from "@/lib/api/properties"
-import { formatDate } from "@/lib/format"
+import { formatCurrency } from "@/lib/format"
 import { canManageProperty } from "@/lib/permissions"
-import type { Reminder } from "@/lib/types"
+import type { DepositTopup, RentCollection } from "@/lib/types"
 import { useAuth } from "@/providers/auth-provider"
 
-const severityTone: Record<string, string> = {
-  low: "bg-muted text-muted-foreground",
-  medium: "bg-brand-soft text-brand-ink",
-  high: "bg-warning/15 text-warning",
-  critical: "bg-destructive/10 text-destructive",
+function periodKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
 }
 
 export function RemindersView() {
   const { user } = useAuth()
   const canManage = canManageProperty(user)
-  const query = useReminders({})
-  const queryClient = useQueryClient()
-  const [open, setOpen] = useState(false)
-  const [deleting, setDeleting] = useState<Reminder>()
+  const [month, setMonth] = useState(() => new Date())
+  const period = periodKey(month)
+  const rent = useRentCollection(period)
+  const deposits = useDepositTopups()
+  const [paying, setPaying] = useState<RentCollection>()
 
-  const complete = useMutation({
-    mutationFn: (id: string) => completeReminder(id),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: propertyKeys.all })
-      toast.success("Reminder completed")
-    },
-    onError: (error) =>
-      toast.error(getErrorMessage(error, "Couldn't complete it.")),
-  })
-
-  const remove = useMutation({
-    mutationFn: (id: string) => deleteReminder(id),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: propertyKeys.all })
-      toast.success("Reminder deleted")
-      setDeleting(undefined)
-    },
-    onError: (error) =>
-      toast.error(getErrorMessage(error, "Couldn't delete it.")),
-  })
+  const rentRows = rent.data ?? []
+  const rentTotal = rentRows.reduce(
+    (sum, row) => sum + Math.max(0, row.outstanding_kes ?? 0),
+    0
+  )
+  const depositRows = deposits.data ?? []
+  const depositTotalUsd = depositRows.reduce(
+    (sum, row) => sum + Math.max(0, row.shortfall_usd ?? 0),
+    0
+  )
+  const depositTotalKes = depositRows.reduce(
+    (sum, row) => sum + Math.max(0, row.shortfall_kes ?? 0),
+    0
+  )
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
-        eyebrow="Follow-ups"
-        title="Reminders"
-        description="Rent, deposits, documents and anything else needing attention."
+        eyebrow="Collections"
+        title="Payment Reminders"
+        description="Track outstanding rent and deposit top-ups."
         action={
-          canManage && (
+          <div className="flex items-center gap-1 rounded-full border px-1 py-1">
             <Button
-              className="h-10 self-start rounded-full px-5"
-              onClick={() => setOpen(true)}
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-full"
+              aria-label="Previous month"
+              onClick={() => setMonth((current) => addMonths(current, -1))}
             >
-              <PlusIcon />
-              Add reminder
+              <ChevronLeftIcon />
             </Button>
-          )
+            <span className="min-w-32 text-center text-sm font-medium">
+              {format(month, "MMMM yyyy")}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-full"
+              aria-label="Next month"
+              onClick={() => setMonth((current) => addMonths(current, 1))}
+            >
+              <ChevronRightIcon />
+            </Button>
+          </div>
         }
       />
 
-      {query.isPending ? (
-        <div className="grid gap-3">
-          {Array.from({ length: 4 }, (_, index) => (
-            <Skeleton key={index} className="h-16 rounded-2xl" />
-          ))}
-        </div>
-      ) : query.isError ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed py-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            {getErrorMessage(query.error, "Couldn't load reminders.")}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card className="gap-2 rounded-2xl p-5 shadow-xs">
+          <p className="flex items-center gap-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <ScrollTextIcon className="size-4" />
+            Rent outstanding
           </p>
-          <Button
-            variant="outline"
-            className="h-10 rounded-full px-5"
-            onClick={() => query.refetch()}
-          >
-            Try again
-          </Button>
-        </div>
-      ) : (query.data ?? []).length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed py-12 text-center text-sm text-muted-foreground">
-          <BellIcon className="size-5 text-brand-ink" />
-          Nothing outstanding.
-        </div>
-      ) : (
-        <Card className="gap-0 rounded-2xl p-0">
-          <ul className="divide-y">
-            {(query.data ?? []).map((reminder) => (
-              <li
-                key={reminder.reminder_id}
-                className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{reminder.title}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {reminder.kind} ·{" "}
-                    {reminder.due_on ? formatDate(reminder.due_on) : "No date"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${severityTone[reminder.severity] ?? "bg-muted"}`}
-                  >
-                    {reminder.severity}
-                  </span>
-                  {canManage ? (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="rounded-full"
-                        disabled={complete.isPending}
-                        onClick={() => complete.mutate(reminder.reminder_id)}
-                      >
-                        {complete.isPending ? (
-                          <Loader2Icon className="animate-spin" />
-                        ) : (
-                          <CheckIcon />
-                        )}
-                        Complete
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="rounded-full text-destructive"
-                        onClick={() => setDeleting(reminder)}
-                      >
-                        Delete
-                      </Button>
-                    </>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ul>
+          <p className="font-heading text-2xl font-bold">
+            {formatCurrency(rentTotal)}{" "}
+            <span className="text-sm font-medium text-muted-foreground">
+              / {rentRows.length} leases
+            </span>
+          </p>
         </Card>
-      )}
+        <Card className="gap-2 rounded-2xl p-5 shadow-xs">
+          <p className="flex items-center gap-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <ScrollTextIcon className="size-4" />
+            Deposit top-ups needed
+          </p>
+          <p className="font-heading text-2xl font-bold">
+            {depositTotalUsd > 0
+              ? formatCurrency(depositTotalUsd, "USD")
+              : formatCurrency(depositTotalKes)}{" "}
+            <span className="text-sm font-medium text-muted-foreground">
+              / {depositRows.length} leases
+            </span>
+          </p>
+        </Card>
+      </div>
 
-      <ReminderDialog open={open} onOpenChange={setOpen} />
+      <Tabs defaultValue="rent" className="gap-4">
+        <TabsList variant="line" className="w-fit gap-2">
+          <TabsTrigger value="rent" className="px-3">
+            Rent Outstanding ({rentRows.length})
+          </TabsTrigger>
+          <TabsTrigger value="deposits" className="px-3">
+            Deposit Top-ups ({depositRows.length})
+          </TabsTrigger>
+        </TabsList>
 
-      <AlertDialog
-        open={Boolean(deleting)}
-        onOpenChange={(next) => !next && setDeleting(undefined)}
+        <TabsContent value="rent">
+          {rent.isPending ? (
+            <TableSkeleton />
+          ) : rent.isError ? (
+            <ErrorBlock
+              message={getErrorMessage(rent.error, "Couldn't load rent.")}
+              onRetry={() => rent.refetch()}
+            />
+          ) : rentRows.length === 0 ? (
+            <EmptyBlock message="No active leases to collect for this period." />
+          ) : (
+            <Card className="gap-0 overflow-hidden rounded-2xl p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/30 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                      <th className="px-5 py-3">Tenant</th>
+                      <th className="px-5 py-3">Property / Unit</th>
+                      <th className="px-5 py-3 text-right">Expected</th>
+                      <th className="px-5 py-3 text-right">Paid</th>
+                      <th className="px-5 py-3 text-right">Balance</th>
+                      <th className="px-5 py-3">Status</th>
+                      <th className="px-5 py-3" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {rentRows.map((row) => {
+                      const balance = Math.max(0, row.outstanding_kes ?? 0)
+                      const expected = row.expected_kes ?? 0
+                      const unconfigured = expected <= 0
+                      const status = unconfigured
+                        ? "Unconfigured"
+                        : balance <= 0
+                          ? "Paid"
+                          : (row.paid_kes ?? 0) > 0
+                            ? "Partial"
+                            : "Unpaid"
+                      return (
+                        <tr key={row.lease_id}>
+                          <td className="px-5 py-3 font-medium">
+                            <span className="inline-flex items-center gap-2">
+                              <UserIcon className="size-3.5 text-muted-foreground" />
+                              {row.tenant_full_name ||
+                                row.tenant_company_name ||
+                                "Tenant"}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3 text-muted-foreground">
+                            {row.property_alias} • {row.unit_label}
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            {formatCurrency(expected)}
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            {formatCurrency(row.paid_kes ?? 0)}
+                          </td>
+                          <td
+                            className={`px-5 py-3 text-right font-semibold ${balance > 0 ? "text-amber-600" : ""}`}
+                          >
+                            {formatCurrency(balance)}
+                          </td>
+                          <td className="px-5 py-3">
+                            <Badge
+                              variant="outline"
+                              className={
+                                status === "Unconfigured"
+                                  ? "rounded-full"
+                                  : status === "Paid"
+                                    ? "rounded-full border-emerald-700/30 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
+                                    : "rounded-full border-amber-600/30 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+                              }
+                            >
+                              {status}
+                            </Badge>
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            {unconfigured ? (
+                              <Link
+                                href="/property/leases"
+                                className="text-sm italic text-muted-foreground hover:text-foreground hover:underline"
+                              >
+                                Configure rent
+                              </Link>
+                            ) : canManage ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="rounded-full"
+                                onClick={() => setPaying(row)}
+                              >
+                                Record
+                              </Button>
+                            ) : null}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="deposits">
+          {deposits.isPending ? (
+            <TableSkeleton />
+          ) : deposits.isError ? (
+            <ErrorBlock
+              message={getErrorMessage(
+                deposits.error,
+                "Couldn't load deposit top-ups."
+              )}
+              onRetry={() => deposits.refetch()}
+            />
+          ) : depositRows.length === 0 ? (
+            <EmptyBlock message="Every active lease has reached its deposit target." />
+          ) : (
+            <Card className="gap-0 overflow-hidden rounded-2xl p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/30 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                      <th className="px-5 py-3">Tenant</th>
+                      <th className="px-5 py-3">Property / Unit</th>
+                      <th className="px-5 py-3 text-right">Held</th>
+                      <th className="px-5 py-3 text-right">Required</th>
+                      <th className="px-5 py-3 text-right">Shortfall</th>
+                      <th className="px-5 py-3" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {depositRows.map((row) => (
+                      <DepositRow key={row.lease_id} row={row} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      <RentPaymentDialog
+        open={Boolean(paying)}
+        onOpenChange={(next) => !next && setPaying(undefined)}
+        row={paying}
+        period={period}
+      />
+    </div>
+  )
+}
+
+function DepositRow({ row }: { row: DepositTopup }) {
+  const usd = row.shortfall_usd > 0
+  const currency = usd ? "USD" : "KES"
+  const held = usd ? row.deposit_usd : row.deposit_kes
+  const required = usd ? row.required_usd : row.required_kes
+  const shortfall = usd ? row.shortfall_usd : row.shortfall_kes
+
+  return (
+    <tr>
+      <td className="px-5 py-3 font-medium">
+        <span className="inline-flex items-center gap-2">
+          <WalletIcon className="size-3.5 text-muted-foreground" />
+          {row.tenant_name || "Tenant"}
+        </span>
+      </td>
+      <td className="px-5 py-3 text-muted-foreground">
+        {row.property_alias} • {row.unit_label}
+      </td>
+      <td className="px-5 py-3 text-right">
+        {formatCurrency(held ?? 0, currency)}
+      </td>
+      <td className="px-5 py-3 text-right">
+        {formatCurrency(required ?? 0, currency)}
+      </td>
+      <td className="px-5 py-3 text-right font-semibold text-amber-600">
+        {formatCurrency(shortfall ?? 0, currency)}
+      </td>
+      <td className="px-5 py-3 text-right">
+        <Link
+          href={`/property/tenants/${row.tenant_id}`}
+          className="inline-flex items-center gap-1 text-sm italic text-muted-foreground hover:text-foreground hover:underline"
+        >
+          View item
+        </Link>
+      </td>
+    </tr>
+  )
+}
+
+function TableSkeleton() {
+  return (
+    <div className="grid gap-3">
+      {Array.from({ length: 5 }, (_, index) => (
+        <Skeleton key={index} className="h-12 rounded-xl" />
+      ))}
+    </div>
+  )
+}
+
+function EmptyBlock({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed py-12 text-center text-sm text-muted-foreground">
+      <CalendarDaysIcon className="size-5 text-emerald-800" />
+      {message}
+    </div>
+  )
+}
+
+function ErrorBlock({
+  message,
+  onRetry,
+}: {
+  message: string
+  onRetry: () => void
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed py-12 text-center">
+      <p className="text-sm text-muted-foreground">{message}</p>
+      <Button
+        variant="outline"
+        className="h-10 rounded-full px-5"
+        onClick={onRetry}
       >
-        <AlertDialogContent className="rounded-2xl p-6">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg font-semibold">
-              Delete {deleting?.title}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This can&apos;t be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="-mx-6 -mb-6 px-6">
-            <AlertDialogCancel className="h-10 rounded-xl px-5">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(event) => {
-                event.preventDefault()
-                if (deleting) remove.mutate(deleting.reminder_id)
-              }}
-              disabled={remove.isPending}
-              variant="destructive"
-              className="h-10 rounded-xl px-5"
-            >
-              {remove.isPending && <Loader2Icon className="animate-spin" />}
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        Try again
+      </Button>
     </div>
   )
 }

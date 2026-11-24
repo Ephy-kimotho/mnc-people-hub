@@ -11,9 +11,11 @@ import type {
 } from "@/lib/schemas/property"
 import type {
   BankAccount,
+  DepositTopup,
   FxRate,
   Lease,
   Maintenance,
+  NeedsAttentionAlert,
   Property,
   PropertyDashboard,
   PropertyUnit,
@@ -36,6 +38,8 @@ export const propertyKeys = {
     ["property", "leases", filters] as const,
   banks: () => ["property", "bank-accounts"] as const,
   rent: (period: string) => ["property", "rent", period] as const,
+  depositTopups: () => ["property", "deposit-topups"] as const,
+  needsAttention: () => ["property", "needs-attention"] as const,
   reminders: (filters: { property_id?: string; completed?: boolean }) =>
     ["property", "reminders", filters] as const,
   maintenance: (filters: Record<string, string | undefined>) =>
@@ -201,7 +205,7 @@ export async function fetchLeases(filters: {
   return response.data
 }
 
-export async function createLease(values: LeaseInput) {
+export async function createLease(values: LeaseInput & { status?: string }) {
   const response = await axiosInstance.post<Lease>(
     "/property/leases",
     clean(values)
@@ -287,6 +291,30 @@ export async function recordRentPayment(
   const response = await axiosInstance.post<RentCollection>(
     `/property/rent-collection/${leaseId}/${periodKey}`,
     clean(values)
+  )
+  return response.data
+}
+
+export async function fetchDepositTopups() {
+  const response = await axiosInstance.get<DepositTopup[]>(
+    "/property/deposit-topups"
+  )
+  return response.data
+}
+
+// ── Needs attention ───────────────────────────────────────────────
+
+export async function fetchNeedsAttention() {
+  const response = await axiosInstance.get<NeedsAttentionAlert[]>(
+    "/property/needs-attention"
+  )
+  return response.data
+}
+
+export async function acknowledgeAlert(alertKey: string) {
+  const response = await axiosInstance.post<{ message: string }>(
+    "/property/needs-attention/acknowledge",
+    { alert_key: alertKey }
   )
   return response.data
 }

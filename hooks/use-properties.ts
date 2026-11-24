@@ -3,9 +3,11 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import {
   fetchAllUnits,
   fetchBankAccounts,
+  fetchDepositTopups,
   fetchLeases,
   fetchMaintenance,
   fetchMaintenanceSummary,
+  fetchNeedsAttention,
   fetchProperties,
   fetchProperty,
   fetchPropertyDashboard,
@@ -109,6 +111,20 @@ export function useRentCollection(periodKey: string) {
     queryKey: propertyKeys.rent(periodKey),
     queryFn: () => fetchRentCollection(periodKey),
     enabled: /^\d{4}-\d{2}$/.test(periodKey),
+  })
+}
+
+export function useDepositTopups() {
+  return useQuery({
+    queryKey: propertyKeys.depositTopups(),
+    queryFn: fetchDepositTopups,
+  })
+}
+
+export function useNeedsAttention() {
+  return useQuery({
+    queryKey: propertyKeys.needsAttention(),
+    queryFn: fetchNeedsAttention,
   })
 }
 

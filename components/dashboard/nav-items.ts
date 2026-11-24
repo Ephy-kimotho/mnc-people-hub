@@ -1,4 +1,5 @@
 import {
+  AlertTriangleIcon,
   BellIcon,
   Building2Icon,
   CalendarDaysIcon,
@@ -53,9 +54,14 @@ export const propertyNavItems: NavItem[] = [
   { title: "Properties", href: "/property/properties", icon: Building2Icon },
   { title: "Tenants", href: "/property/tenants", icon: UsersIcon },
   { title: "Leases", href: "/property/leases", icon: FileTextIcon },
-  { title: "Banking", href: "/property/banking", icon: LandmarkIcon },
-  { title: "Operations", href: "/property/operations", icon: WrenchIcon },
+  {
+    title: "Needs Attention",
+    href: "/property/needs-attention",
+    icon: AlertTriangleIcon,
+  },
   { title: "Reminders", href: "/property/reminders", icon: BellIcon },
+  { title: "Operations", href: "/property/operations", icon: WrenchIcon },
+  { title: "Banking", href: "/property/banking", icon: LandmarkIcon },
 ]
 
 export const allNavItems = [...navItems, ...propertyNavItems]

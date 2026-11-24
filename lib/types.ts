@@ -533,6 +533,38 @@ export type FxRate = {
   source: string
 }
 
+export type DepositTopup = {
+  lease_id: string
+  tenant_id: string
+  property_id: string
+  unit_id: string
+  monthly_rent_kes: number | null
+  monthly_rent_usd: number | null
+  deposit_kes: number
+  deposit_usd: number
+  deposit_target_months: number
+  property_alias: string
+  unit_label: string
+  tenant_name: string | null
+  required_kes: number
+  required_usd: number
+  shortfall_kes: number
+  shortfall_usd: number
+}
+
+export type NeedsAttentionAlert = {
+  alert_key: string
+  kind: string
+  severity: string
+  title: string
+  detail: string
+  lease_id: string
+  tenant_id: string
+  property_id: string
+  property_alias: string
+  unit_label: string
+}
+
 // A staff member's assignment to a property (MNC People ↔ MNC Property)
 export type PropertyAssignment = {
   assignment_id: string
