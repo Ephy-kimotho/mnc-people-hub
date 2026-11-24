@@ -11,6 +11,7 @@ import type {
 } from "@/lib/schemas/property"
 import type {
   BankAccount,
+  FxRate,
   Lease,
   Maintenance,
   Property,
@@ -60,6 +61,11 @@ export async function fetchPropertyDashboard() {
   const response = await axiosInstance.get<PropertyDashboard>(
     "/property/dashboard"
   )
+  return response.data
+}
+
+export async function fetchUsdKesRate() {
+  const response = await axiosInstance.get<FxRate>("/property/fx/usd-kes")
   return response.data
 }
 

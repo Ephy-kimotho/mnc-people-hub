@@ -20,6 +20,7 @@ import {
   subscribeAccessToken,
 } from "@/lib/auth-token"
 import { onUnauthorized, refreshAccessToken } from "@/lib/axios"
+import { allNavItems } from "@/components/dashboard/nav-items"
 import type { LoginValues } from "@/lib/schemas/auth"
 import type { AuthUser } from "@/lib/types"
 
@@ -60,13 +61,9 @@ const APP_ROUTES = [
   "/",
   ...PUBLIC_ROUTES,
   CHANGE_PASSWORD_ROUTE,
-  "/overview",
   "/profile",
-  "/leaves",
-  "/locations",
-  "/staff",
-  "/submit-leave",
-  "/users",
+  // Every nav page, so new routes are protected automatically
+  ...allNavItems.map((item) => item.href),
 ]
 
 /** Whether the path matches a real route (so a signed-out visitor belongs at login). */
@@ -182,8 +179,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await authApi.logout()
     } finally {
       endSession()
+      router.replace("/login")
     }
-  }, [endSession])
+  }, [endSession, router])
 
   const value = useMemo<AuthContextValue>(
     () => ({

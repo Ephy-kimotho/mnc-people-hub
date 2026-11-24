@@ -461,9 +461,49 @@ export type PropertyDashboard = {
   occupancy_pct: number
   active_leases: number
   monthly_rent_kes: number
+  monthly_rent_usd: number
   deposits_kes: number
+  deposits_usd: number
   service_charge_kes: number
+  leases_without_rent: number
+  tenants_without_rent: number
+  occupancy_by_property: {
+    property_id: string
+    alias: string
+    total_units: number
+    occupied_units: number
+  }[]
+  rent_by_property: {
+    property_id: string
+    alias: string
+    kes: number
+    usd: number
+  }[]
+  upcoming_events: {
+    lease_id: string
+    property_alias: string
+    tenant_name: string | null
+    tenure: string | null
+    end_date: string
+  }[]
+  routing: {
+    account_id: string | null
+    bank_name: string | null
+    account_name: string | null
+    assigned: boolean
+    rent_kes: number
+    rent_usd: number
+    service_charge_kes: number
+  }[]
   deposit_alerts: DepositAlert[]
+}
+
+export type FxRate = {
+  base: string
+  quote: string
+  rate: number
+  as_of: string
+  source: string
 }
 
 // A staff member's assignment to a property (MNC People ↔ MNC Property)

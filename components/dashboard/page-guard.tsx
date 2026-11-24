@@ -13,7 +13,9 @@ export function PageGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { user } = useAuth()
 
-  if (!user || canAccessPage(user, pathname)) return children
+  // The auth provider redirects signed-out visitors; render nothing meanwhile
+  if (!user) return null
+  if (canAccessPage(user, pathname)) return children
 
   return (
     <Card className="mx-auto max-w-md items-center gap-3 rounded-2xl px-6 py-10 text-center">

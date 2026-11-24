@@ -11,9 +11,18 @@ import {
   fetchReminders,
   fetchRentCollection,
   fetchTenants,
+  fetchUsdKesRate,
   fetchUnits,
   propertyKeys,
 } from "@/lib/api/properties"
+
+export function useFxRate() {
+  return useQuery({
+    queryKey: ["property", "fx"],
+    queryFn: fetchUsdKesRate,
+    staleTime: 60 * 60 * 1000,
+  })
+}
 
 export function usePropertyDashboard() {
   return useQuery({
