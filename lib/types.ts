@@ -300,8 +300,11 @@ export type Property = {
   unit_count?: number
   occupied_count?: number
   monthly_rent_kes?: number
+  monthly_rent_usd?: number
   deposits_kes?: number
+  deposits_usd?: number
   service_charge_kes?: number
+  tenants_without_service_charge?: number
 }
 
 export type PropertyUnit = {

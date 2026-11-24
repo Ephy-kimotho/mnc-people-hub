@@ -17,12 +17,18 @@ const optionalText = z
 
 export const propertySchema = z.object({
   alias: z.string().trim().min(2, "Enter a property name."),
+  title_number: optionalText,
+  title_deed_name: optionalText,
   property_type: z.string().min(1, "Choose a property type."),
   county: optionalText,
   location: optionalText,
   size: optionalNumber,
   size_unit: z.string().optional(),
   tenure: z.string().optional(),
+  status: z.string().min(1),
+  latitude: optionalNumber,
+  longitude: optionalNumber,
+  google_maps_url: optionalText,
   lease_expiry: optionalText,
   deposit_target_months: z.coerce.number().int().min(1).max(12),
   notes: optionalText,

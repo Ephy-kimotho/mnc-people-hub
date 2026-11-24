@@ -1,11 +1,11 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import type { z } from "zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Loader2Icon } from "lucide-react"
 import toast from "react-hot-toast"
 import { Controller, useForm } from "react-hook-form"
+import type { z } from "zod"
 
 import { DatePicker } from "@/components/date-picker"
 import { Button } from "@/components/ui/button"
@@ -34,8 +34,9 @@ const labelClass =
   "font-heading text-xs font-semibold tracking-wide text-iron uppercase"
 
 const propertyTypes = ["Residential", "Commercial", "Industrial", "Mixed"]
-const tenures = ["Leasehold", "Freehold"]
+const tenures = ["Freehold", "Leasehold"]
 const sizeUnits = ["acres", "hectares", "square feet", "square metres"]
+const statuses = ["Active", "Inactive", "Sold"]
 
 export function PropertyDialog({
   open,
@@ -51,12 +52,12 @@ export function PropertyDialog({
       <DialogContent className="gap-0 p-0">
         <DialogHeader className="gap-1 border-b px-6 py-5">
           <DialogTitle className="text-lg font-semibold">
-            {property ? "Edit property" : "Add property"}
+            {property ? "Edit property details" : "Add property"}
           </DialogTitle>
           <DialogDescription>
             {property
-              ? "Update the property record. Units and leases are managed separately."
-              : "Create a property record. You can add units and leases after."}
+              ? "Update the property name, LR number, address, classification, size, and map information."
+              : "Create a register record. Ownership, units, compliance and documents can be added afterward."}
           </DialogDescription>
         </DialogHeader>
         <PropertyForm
@@ -76,20 +77,22 @@ function PropertyForm({
   onDone: () => void
 }) {
   const queryClient = useQueryClient()
-  const form = useForm<
-    z.input<typeof propertySchema>,
-    unknown,
-    PropertyInput
-  >({
+  const form = useForm<z.input<typeof propertySchema>, unknown, PropertyInput>({
     resolver: zodResolver(propertySchema),
     defaultValues: {
       alias: property?.alias ?? "",
+      title_number: property?.title_number ?? "",
+      title_deed_name: property?.title_deed_name ?? "",
       property_type: property?.property_type ?? "Residential",
       county: property?.county ?? "",
       location: property?.location ?? "",
       size: property?.size ?? undefined,
       size_unit: property?.size_unit ?? "acres",
-      tenure: property?.tenure ?? "Leasehold",
+      tenure: property?.tenure ?? "Freehold",
+      status: property?.status ?? "Active",
+      latitude: undefined,
+      longitude: undefined,
+      google_maps_url: "",
       lease_expiry: property?.lease_expiry ?? "",
       deposit_target_months: property?.deposit_target_months ?? 2,
       notes: property?.notes ?? "",
@@ -124,25 +127,47 @@ function PropertyForm({
     >
       <fieldset
         disabled={mutation.isPending}
-        className="grid max-h-[75vh] gap-4 overflow-y-auto px-6 py-5"
+        className="grid max-h-[70vh] gap-4 overflow-y-auto px-6 py-5"
       >
-        <div className="grid gap-2">
-          <FieldLabel htmlFor="property-alias" className={labelClass}>
-            Property name
-          </FieldLabel>
-          <Input
-            id="property-alias"
-            placeholder="5199 Gardens"
-            className={inputClass}
-            {...form.register("alias")}
-          />
-          <FieldError>{form.formState.errors.alias?.message}</FieldError>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Property name"
+            htmlFor="property-alias"
+            error={form.formState.errors.alias?.message}
+          >
+            <Input
+              id="property-alias"
+              placeholder="Balmoral Court"
+              className={inputClass}
+              autoFocus
+              {...form.register("alias")}
+            />
+          </Field>
+          <Field label="LR / Title number" htmlFor="property-title">
+            <Input
+              id="property-title"
+              placeholder="LR No. 209/5445"
+              className={inputClass}
+              {...form.register("title_number")}
+            />
+          </Field>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Title deed registered name"
+            htmlFor="property-deed"
+          >
+            <Input
+              id="property-deed"
+              placeholder="Name shown on the title deed"
+              className={inputClass}
+              {...form.register("title_deed_name")}
+            />
+          </Field>
           <div className="grid gap-2">
             <FieldLabel htmlFor="property-type" className={labelClass}>
-              Type
+              Property use
             </FieldLabel>
             <select
               id="property-type"
@@ -156,6 +181,28 @@ function PropertyForm({
               ))}
             </select>
           </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="County" htmlFor="property-county">
+            <Input
+              id="property-county"
+              placeholder="Nairobi"
+              className={inputClass}
+              {...form.register("county")}
+            />
+          </Field>
+          <Field label="Location" htmlFor="property-location">
+            <Input
+              id="property-location"
+              placeholder="Nairobi, Nairobi"
+              className={inputClass}
+              {...form.register("location")}
+            />
+          </Field>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
             <FieldLabel htmlFor="property-tenure" className={labelClass}>
               Tenure
@@ -172,49 +219,36 @@ function PropertyForm({
               ))}
             </select>
           </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
-            <FieldLabel htmlFor="property-county" className={labelClass}>
-              County
+            <FieldLabel htmlFor="property-status" className={labelClass}>
+              Status
             </FieldLabel>
-            <Input
-              id="property-county"
-              placeholder="Nairobi"
+            <select
+              id="property-status"
               className={inputClass}
-              {...form.register("county")}
-            />
-          </div>
-          <div className="grid gap-2">
-            <FieldLabel htmlFor="property-location" className={labelClass}>
-              Location
-            </FieldLabel>
-            <Input
-              id="property-location"
-              placeholder="Garden Road, Riverside"
-              className={inputClass}
-              {...form.register("location")}
-            />
+              {...form.register("status")}
+            >
+              {statuses.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="grid gap-2">
-            <FieldLabel htmlFor="property-size" className={labelClass}>
-              Size
-            </FieldLabel>
+          <Field label="Size" htmlFor="property-size">
             <Input
               id="property-size"
               type="number"
-              step="0.01"
+              step="0.001"
               min="0"
-              placeholder="0.5"
+              placeholder="2.701"
               className={inputClass}
               {...form.register("size")}
             />
-            <FieldError>{form.formState.errors.size?.message}</FieldError>
-          </div>
+          </Field>
           <div className="grid gap-2">
             <FieldLabel htmlFor="property-size-unit" className={labelClass}>
               Size unit
@@ -234,6 +268,38 @@ function PropertyForm({
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Latitude" htmlFor="property-latitude">
+            <Input
+              id="property-latitude"
+              type="number"
+              step="any"
+              placeholder="-1.286389"
+              className={inputClass}
+              {...form.register("latitude")}
+            />
+          </Field>
+          <Field label="Longitude" htmlFor="property-longitude">
+            <Input
+              id="property-longitude"
+              type="number"
+              step="any"
+              placeholder="36.817223"
+              className={inputClass}
+              {...form.register("longitude")}
+            />
+          </Field>
+        </div>
+
+        <Field label="Google Maps URL" htmlFor="property-maps">
+          <Input
+            id="property-maps"
+            placeholder="https://maps.google.com/…"
+            className={inputClass}
+            {...form.register("google_maps_url")}
+          />
+        </Field>
+
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
             <FieldLabel className={labelClass}>Lease expiry</FieldLabel>
             <Controller
@@ -243,7 +309,7 @@ function PropertyForm({
                 <DatePicker
                   value={field.value ?? ""}
                   onChange={field.onChange}
-                  placeholder="No expiry"
+                  placeholder="mm/dd/yyyy"
                   className={inputClass}
                 />
               )}
@@ -272,7 +338,7 @@ function PropertyForm({
 
         <div className="grid gap-2">
           <FieldLabel htmlFor="property-notes" className={labelClass}>
-            Notes
+            Internal notes
           </FieldLabel>
           <Textarea
             id="property-notes"
@@ -299,9 +365,31 @@ function PropertyForm({
           disabled={mutation.isPending}
         >
           {mutation.isPending && <Loader2Icon className="animate-spin" />}
-          {property ? "Save changes" : "Add property"}
+          {property ? "Save property" : "Add property"}
         </Button>
       </DialogFooter>
     </form>
+  )
+}
+
+function Field({
+  label,
+  htmlFor,
+  error,
+  children,
+}: {
+  label: string
+  htmlFor: string
+  error?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="grid gap-2">
+      <FieldLabel htmlFor={htmlFor} className={labelClass}>
+        {label}
+      </FieldLabel>
+      {children}
+      <FieldError>{error}</FieldError>
+    </div>
   )
 }
