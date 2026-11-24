@@ -15,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
 import { BankAccountDialog } from "@/components/property/bank-account-dialog"
 import { DeleteBankAccountDialog } from "@/components/property/delete-bank-account-dialog"
 import { RentPaymentDialog } from "@/components/property/rent-payment-dialog"

@@ -14,6 +14,7 @@ import type {
   StaffDocument,
   StaffMember,
   StaffPhoto,
+  PropertyAssignment,
 } from "@/lib/types"
 
 // Every staff query shares this prefix, so one invalidation refreshes them all
@@ -26,6 +27,8 @@ export const staffKeys = {
   photo: (staffId: string) => ["staff", "detail", staffId, "photo"] as const,
   documents: (staffId: string) =>
     ["staff", "detail", staffId, "documents"] as const,
+  assignments: (staffId: string) =>
+    ["staff", "detail", staffId, "assignments"] as const,
 }
 
 // Only active staff are listed; axios drops an unset location from the URL.
@@ -159,6 +162,39 @@ export async function fetchStaffDocuments(staffId: string) {
 
 export async function deleteStaffDocument(staffId: string, documentId: string) {
   await axiosInstance.delete(`/staff/staff/${staffId}/documents/${documentId}`)
+}
+
+export async function fetchStaffAssignments(staffId: string) {
+  const response = await axiosInstance.get<PropertyAssignment[]>(
+    `/staff/staff/${staffId}/assignments`
+  )
+  return response.data
+}
+
+export async function createStaffAssignment(
+  staffId: string,
+  values: {
+    property_id: string
+    property_alias: string
+    role_at_property?: string
+    assigned_from?: string
+    notes?: string
+  }
+) {
+  const response = await axiosInstance.post<PropertyAssignment>(
+    `/staff/staff/${staffId}/assignments`,
+    values
+  )
+  return response.data
+}
+
+export async function deleteStaffAssignment(
+  staffId: string,
+  assignmentId: string
+) {
+  await axiosInstance.delete(
+    `/staff/staff/${staffId}/assignments/${assignmentId}`
+  )
 }
 
 // Multipart form data; the API expects the category in lowercase

@@ -8,6 +8,9 @@ import {
   LandmarkIcon,
   LayoutGridIcon,
   MapPinIcon,
+  MegaphoneIcon,
+  ScrollTextIcon,
+  SettingsIcon,
   UserIcon,
   UsersIcon,
   UserPlus,
@@ -31,7 +34,10 @@ export const navItems: NavItem[] = [
   { title: "Locations", href: "/locations", icon: MapPinIcon },
   { title: "Leave Requests", href: "/leaves", icon: CalendarDaysIcon },
   { title: "Submit Leave", href: "/submit-leave", icon: CirclePlusIcon },
+  { title: "Announcements", href: "/announcements", icon: MegaphoneIcon },
   { title: "Users", href: "/users", icon: UserPlus },
+  { title: "Settings", href: "/settings", icon: SettingsIcon },
+  { title: "Audit Log", href: "/audit", icon: ScrollTextIcon },
 ]
 
 export type NavSection = "people" | "property"

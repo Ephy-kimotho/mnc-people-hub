@@ -9,6 +9,8 @@ const restrictedPages: { href: string; roles: RoleName[] }[] = [
   { href: "/locations", roles: ["admin", "manager"] },
   { href: "/staff", roles: ["admin", "manager"] },
   { href: "/property", roles: ["admin", "manager"] },
+  { href: "/settings", roles: ["admin"] },
+  { href: "/audit", roles: ["admin"] },
 ]
 
 export function canAccessPage(user: Viewer, pathname: string) {

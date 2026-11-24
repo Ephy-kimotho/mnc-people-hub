@@ -465,3 +465,58 @@ export type PropertyDashboard = {
   service_charge_kes: number
   deposit_alerts: DepositAlert[]
 }
+
+// A staff member's assignment to a property (MNC People ↔ MNC Property)
+export type PropertyAssignment = {
+  assignment_id: string
+  staff_id: string
+  property_id: string
+  property_alias: string
+  role_at_property: string | null
+  assigned_from: string
+  is_current: boolean
+  notes: string | null
+  created_at: string
+}
+
+// ── MNC core ──────────────────────────────────────────────────────
+
+export type Announcement = {
+  announcement_id: string
+  title: string
+  message: string
+  author_id: string
+  author_name: string | null
+  created_at: string
+}
+
+export type Birthday = {
+  staff_id: string
+  full_name: string
+  role: string
+  work_location: string | null
+  date_of_birth: string
+  birthday_display: string
+}
+
+export type Anniversary = {
+  staff_id: string
+  full_name: string
+  role: string
+  work_location: string | null
+  start_date: string
+  years_completed: number
+  anniversary_display: string
+}
+
+export type AuditEntry = {
+  id: number
+  created_at: string
+  user_id: string | null
+  user_name: string | null
+  user_role: string | null
+  action: string
+  entity: string | null
+  entity_id: string | null
+  description: string | null
+}

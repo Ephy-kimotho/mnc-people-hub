@@ -3,6 +3,7 @@ import Link from "next/link"
 
 import { PageHeader } from "@/components/dashboard/page-header"
 import { LeaveEssentials } from "@/components/overview/leave-essentials"
+import { Milestones } from "@/components/overview/milestones"
 import { OnLeaveToday } from "@/components/overview/on-leave-today"
 import { OverviewStats } from "@/components/overview/overview-stats"
 import { RecentLeaveRequests } from "@/components/overview/recent-leave-requests"
@@ -35,6 +36,7 @@ export default function OverviewPage() {
 
       <OnLeaveToday />
       <StaffByLocation />
+      <Milestones />
     </div>
   )
 }

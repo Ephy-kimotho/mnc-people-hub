@@ -1,6 +1,10 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
-import { fetchStaff, staffKeys } from "@/lib/api/staff"
+import {
+  fetchStaff,
+  fetchStaffAssignments,
+  staffKeys,
+} from "@/lib/api/staff"
 import type { StaffFilters } from "@/lib/types"
 
 // Active staff, cached per filter set. The previous list stays on screen
@@ -10,5 +14,15 @@ export function useStaff(filters: StaffFilters = {}) {
     queryKey: staffKeys.list(filters),
     queryFn: () => fetchStaff(filters),
     placeholderData: keepPreviousData,
+  })
+}
+
+
+// Property assignments for one staff member
+export function useStaffAssignments(staffId: string) {
+  return useQuery({
+    queryKey: staffKeys.assignments(staffId),
+    queryFn: () => fetchStaffAssignments(staffId),
+    enabled: Boolean(staffId),
   })
 }

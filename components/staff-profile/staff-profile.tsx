@@ -9,6 +9,7 @@ import {
   DetailsCard,
   DetailsList,
 } from "@/components/staff-profile/details-card"
+import { AssignmentsCard } from "@/components/staff-profile/assignments-card"
 import { DocumentsCard } from "@/components/staff-profile/documents-card"
 import { EmergencyContactsCard } from "@/components/staff-profile/emergency-contacts-card"
 import { LeaveBalance } from "@/components/staff-profile/leave-balance"
@@ -91,6 +92,7 @@ function ProfileLayout({ staff }: { staff: StaffMember }) {
 
       <div className="space-y-6">
         <LeaveBalance staffId={staff.staff_id} />
+        <AssignmentsCard staff={staff} />
         <LifeCoverCard staff={staff} />
         <DocumentsCard staff={staff} />
 
