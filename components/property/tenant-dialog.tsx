@@ -136,7 +136,7 @@ function TenantForm({
       emergency_contact_relationship:
         tenant?.emergency_contact_relationship ?? "",
       notes: tenant?.notes ?? "",
-      consent: tenant?.consent ?? true,
+      consent: tenant?.consent ?? false,
     },
   })
   const type = form.watch("type")
