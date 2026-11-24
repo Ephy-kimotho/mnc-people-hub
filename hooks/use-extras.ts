@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query"
 
-import { authAuditKey, fetchAuthAudit } from "@/lib/api/auth-audit"
+import {
+  authAuditKey,
+  fetchAuthAudit,
+  type AuthAuditFilters,
+} from "@/lib/api/auth-audit"
 import {
   fetchLeaveCalendar,
   fetchLeavePolicies,
@@ -41,9 +45,14 @@ export function useNotificationStats() {
   })
 }
 
-export function useAuthAudit(limit = 100, offset = 0) {
+export function useAuthAudit(
+  limit = 50,
+  offset = 0,
+  filters: AuthAuditFilters = {}
+) {
   return useQuery({
-    queryKey: [...authAuditKey, limit, offset],
-    queryFn: () => fetchAuthAudit(limit, offset),
+    queryKey: [...authAuditKey, limit, offset, filters],
+    queryFn: () => fetchAuthAudit(limit, offset, filters),
+    placeholderData: (previous) => previous,
   })
 }

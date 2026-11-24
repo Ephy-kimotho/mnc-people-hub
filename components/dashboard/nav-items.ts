@@ -83,3 +83,16 @@ export function canSeeNavItem(item: NavItem, user: AuthUser | null) {
 export function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
+
+// The longest matching href wins, so /audit/auth highlights only Auth Audit
+export function activeNavHref(
+  pathname: string,
+  items: readonly NavItem[]
+): string | null {
+  let best: string | null = null
+  for (const item of items) {
+    if (!isActivePath(pathname, item.href)) continue
+    if (!best || item.href.length > best.length) best = item.href
+  }
+  return best
+}

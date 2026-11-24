@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/sidebar"
 import { Eyebrow } from "@/components/dashboard/eyebrow"
 import {
+  activeNavHref,
   canSeeNavItem,
-  isActivePath,
   navItemsForSection,
   sectionForPath,
 } from "@/components/dashboard/nav-items"
@@ -35,6 +35,7 @@ export function AppSidebar() {
   const visibleItems = navItemsForSection(section).filter((item) =>
     canSeeNavItem(item, user)
   )
+  const activeHref = activeNavHref(pathname, visibleItems)
 
   return (
     <Sidebar>
@@ -63,7 +64,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="gap-1.5">
               {visibleItems.map((item) => {
-                const active = isActivePath(pathname, item.href)
+                const active = activeHref === item.href
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton

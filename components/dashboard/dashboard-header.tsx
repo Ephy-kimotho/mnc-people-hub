@@ -17,8 +17,8 @@ import {
 import { useSidebar } from "@/components/ui/sidebar"
 import {
   accountItems,
+  activeNavHref,
   allNavItems,
-  isActivePath,
   sectionForPath,
 } from "@/components/dashboard/nav-items"
 import { UserMenu } from "@/components/dashboard/user-menu"
@@ -28,9 +28,9 @@ export function DashboardHeader() {
   const pathname = usePathname()
   const { toggleSidebar } = useSidebar()
   const { user } = useAuth()
-  const current = [...allNavItems, ...accountItems].find((item) =>
-    isActivePath(pathname, item.href)
-  )
+  const items = [...allNavItems, ...accountItems]
+  const currentHref = activeNavHref(pathname, items)
+  const current = items.find((item) => item.href === currentHref)
   const section = sectionForPath(pathname)
 
   return (
