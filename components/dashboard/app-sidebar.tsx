@@ -21,15 +21,20 @@ import { Eyebrow } from "@/components/dashboard/eyebrow"
 import {
   canSeeNavItem,
   isActivePath,
-  navItems,
+  navItemsForSection,
+  sectionForPath,
 } from "@/components/dashboard/nav-items"
+import { SectionSwitcher } from "@/components/dashboard/section-switcher"
 import { useAuth } from "@/providers/auth-provider"
 
 export function AppSidebar() {
   const pathname = usePathname()
   const { setOpenMobile } = useSidebar()
   const { user } = useAuth()
-  const visibleItems = navItems.filter((item) => canSeeNavItem(item, user))
+  const section = sectionForPath(pathname)
+  const visibleItems = navItemsForSection(section).filter((item) =>
+    canSeeNavItem(item, user)
+  )
 
   return (
     <Sidebar>
@@ -46,10 +51,14 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 pt-6">
+      <div className="pt-4">
+        <SectionSwitcher />
+      </div>
+
+      <SidebarContent className="px-2 pt-2">
         <SidebarGroup>
           <SidebarGroupLabel className="mb-2 text-[0.7rem] font-semibold tracking-[0.18em] text-brand-ink uppercase">
-            Workspace
+            {section === "property" ? "Property" : "Workspace"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1.5">

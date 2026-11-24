@@ -1,11 +1,17 @@
 import {
+  BellIcon,
+  Building2Icon,
   CalendarDaysIcon,
   CirclePlusIcon,
+  FileTextIcon,
+  HouseIcon,
+  LandmarkIcon,
   LayoutGridIcon,
   MapPinIcon,
   UserIcon,
   UsersIcon,
   UserPlus,
+  WrenchIcon,
   type LucideIcon,
 } from "lucide-react"
 
@@ -27,6 +33,30 @@ export const navItems: NavItem[] = [
   { title: "Submit Leave", href: "/submit-leave", icon: CirclePlusIcon },
   { title: "Users", href: "/users", icon: UserPlus },
 ]
+
+export type NavSection = "people" | "property"
+
+export const propertyNavItems: NavItem[] = [
+  { title: "Property Overview", href: "/property", icon: HouseIcon },
+  { title: "Properties", href: "/property/properties", icon: Building2Icon },
+  { title: "Tenants", href: "/property/tenants", icon: UsersIcon },
+  { title: "Leases", href: "/property/leases", icon: FileTextIcon },
+  { title: "Banking", href: "/property/banking", icon: LandmarkIcon },
+  { title: "Operations", href: "/property/operations", icon: WrenchIcon },
+  { title: "Reminders", href: "/property/reminders", icon: BellIcon },
+]
+
+export const allNavItems = [...navItems, ...propertyNavItems]
+
+export function sectionForPath(pathname: string): NavSection {
+  return pathname === "/property" || pathname.startsWith("/property/")
+    ? "property"
+    : "people"
+}
+
+export function navItemsForSection(section: NavSection) {
+  return section === "property" ? propertyNavItems : navItems
+}
 
 // Reached from the header account menu rather than the sidebar
 export const accountItems: NavItem[] = [

@@ -1,0 +1,307 @@
+"use client"
+
+import { zodResolver } from "@hookform/resolvers/zod"
+import type { z } from "zod"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Loader2Icon } from "lucide-react"
+import toast from "react-hot-toast"
+import { Controller, useForm } from "react-hook-form"
+
+import { DatePicker } from "@/components/date-picker"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { FieldError, FieldLabel } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { getErrorMessage } from "@/lib/api/errors"
+import {
+  createProperty,
+  propertyKeys,
+  updateProperty,
+} from "@/lib/api/properties"
+import { propertySchema, type PropertyInput } from "@/lib/schemas/property"
+import type { Property } from "@/lib/types"
+
+const inputClass = "h-11 rounded-xl px-3.5"
+const labelClass =
+  "font-heading text-xs font-semibold tracking-wide text-iron uppercase"
+
+const propertyTypes = ["Residential", "Commercial", "Industrial", "Mixed"]
+const tenures = ["Leasehold", "Freehold"]
+const sizeUnits = ["acres", "hectares", "square feet", "square metres"]
+
+export function PropertyDialog({
+  open,
+  onOpenChange,
+  property,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  property?: Property
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="gap-0 p-0">
+        <DialogHeader className="gap-1 border-b px-6 py-5">
+          <DialogTitle className="text-lg font-semibold">
+            {property ? "Edit property" : "Add property"}
+          </DialogTitle>
+          <DialogDescription>
+            {property
+              ? "Update the property record. Units and leases are managed separately."
+              : "Create a property record. You can add units and leases after."}
+          </DialogDescription>
+        </DialogHeader>
+        <PropertyForm
+          property={property}
+          onDone={() => onOpenChange(false)}
+        />
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function PropertyForm({
+  property,
+  onDone,
+}: {
+  property?: Property
+  onDone: () => void
+}) {
+  const queryClient = useQueryClient()
+  const form = useForm<
+    z.input<typeof propertySchema>,
+    unknown,
+    PropertyInput
+  >({
+    resolver: zodResolver(propertySchema),
+    defaultValues: {
+      alias: property?.alias ?? "",
+      property_type: property?.property_type ?? "Residential",
+      county: property?.county ?? "",
+      location: property?.location ?? "",
+      size: property?.size ?? undefined,
+      size_unit: property?.size_unit ?? "acres",
+      tenure: property?.tenure ?? "Leasehold",
+      lease_expiry: property?.lease_expiry ?? "",
+      deposit_target_months: property?.deposit_target_months ?? 2,
+      notes: property?.notes ?? "",
+    },
+  })
+
+  const mutation = useMutation({
+    mutationFn: (values: PropertyInput) =>
+      property
+        ? updateProperty(property.property_id, values)
+        : createProperty(values),
+    onSuccess: (_data, values) => {
+      void queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      toast.success(
+        `${values.alias} has been ${property ? "updated" : "added"}`
+      )
+      onDone()
+    },
+    onError: (error) =>
+      toast.error(
+        getErrorMessage(
+          error,
+          property ? "Couldn't update this property." : "Couldn't add it."
+        )
+      ),
+  })
+
+  return (
+    <form
+      onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
+      noValidate
+    >
+      <fieldset
+        disabled={mutation.isPending}
+        className="grid max-h-[75vh] gap-4 overflow-y-auto px-6 py-5"
+      >
+        <div className="grid gap-2">
+          <FieldLabel htmlFor="property-alias" className={labelClass}>
+            Property name
+          </FieldLabel>
+          <Input
+            id="property-alias"
+            placeholder="5199 Gardens"
+            className={inputClass}
+            {...form.register("alias")}
+          />
+          <FieldError>{form.formState.errors.alias?.message}</FieldError>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-2">
+            <FieldLabel htmlFor="property-type" className={labelClass}>
+              Type
+            </FieldLabel>
+            <select
+              id="property-type"
+              className={inputClass}
+              {...form.register("property_type")}
+            >
+              {propertyTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2">
+            <FieldLabel htmlFor="property-tenure" className={labelClass}>
+              Tenure
+            </FieldLabel>
+            <select
+              id="property-tenure"
+              className={inputClass}
+              {...form.register("tenure")}
+            >
+              {tenures.map((tenure) => (
+                <option key={tenure} value={tenure}>
+                  {tenure}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-2">
+            <FieldLabel htmlFor="property-county" className={labelClass}>
+              County
+            </FieldLabel>
+            <Input
+              id="property-county"
+              placeholder="Nairobi"
+              className={inputClass}
+              {...form.register("county")}
+            />
+          </div>
+          <div className="grid gap-2">
+            <FieldLabel htmlFor="property-location" className={labelClass}>
+              Location
+            </FieldLabel>
+            <Input
+              id="property-location"
+              placeholder="Garden Road, Riverside"
+              className={inputClass}
+              {...form.register("location")}
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-2">
+            <FieldLabel htmlFor="property-size" className={labelClass}>
+              Size
+            </FieldLabel>
+            <Input
+              id="property-size"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.5"
+              className={inputClass}
+              {...form.register("size")}
+            />
+            <FieldError>{form.formState.errors.size?.message}</FieldError>
+          </div>
+          <div className="grid gap-2">
+            <FieldLabel htmlFor="property-size-unit" className={labelClass}>
+              Size unit
+            </FieldLabel>
+            <select
+              id="property-size-unit"
+              className={inputClass}
+              {...form.register("size_unit")}
+            >
+              {sizeUnits.map((unit) => (
+                <option key={unit} value={unit}>
+                  {unit}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-2">
+            <FieldLabel className={labelClass}>Lease expiry</FieldLabel>
+            <Controller
+              control={form.control}
+              name="lease_expiry"
+              render={({ field }) => (
+                <DatePicker
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  placeholder="No expiry"
+                  className={inputClass}
+                />
+              )}
+            />
+          </div>
+          <div className="grid gap-2">
+            <FieldLabel
+              htmlFor="property-deposit-months"
+              className={labelClass}
+            >
+              Deposit target (months)
+            </FieldLabel>
+            <Input
+              id="property-deposit-months"
+              type="number"
+              min="1"
+              max="12"
+              className={inputClass}
+              {...form.register("deposit_target_months")}
+            />
+            <FieldError>
+              {form.formState.errors.deposit_target_months?.message}
+            </FieldError>
+          </div>
+        </div>
+
+        <div className="grid gap-2">
+          <FieldLabel htmlFor="property-notes" className={labelClass}>
+            Notes
+          </FieldLabel>
+          <Textarea
+            id="property-notes"
+            rows={3}
+            placeholder="Anything worth remembering about this property."
+            {...form.register("notes")}
+          />
+        </div>
+      </fieldset>
+
+      <DialogFooter className="border-t px-6 py-4">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10 rounded-xl px-5"
+          onClick={onDone}
+          disabled={mutation.isPending}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          className="h-10 rounded-xl px-5"
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending && <Loader2Icon className="animate-spin" />}
+          {property ? "Save changes" : "Add property"}
+        </Button>
+      </DialogFooter>
+    </form>
+  )
+}

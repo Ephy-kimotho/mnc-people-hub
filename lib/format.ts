@@ -44,6 +44,11 @@ export function formatAmount(amount: number) {
   )
 }
 
+// "KES 1,000,000"; currency code plus a grouped amount
+export function formatCurrency(amount: number, currency = "KES") {
+  return `${currency} ${formatAmount(amount)}`
+}
+
 // "840 KB", "2.4 MB"; file sizes in bytes, rounded for display
 export function formatFileSize(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`

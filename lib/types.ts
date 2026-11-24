@@ -272,3 +272,196 @@ export type DashboardSummary = {
   pending_leave_requests: number
   upcoming_leave: DashboardLeave[]
 }
+
+// ── Property ──────────────────────────────────────────────────────
+
+export type Property = {
+  property_id: string
+  alias: string
+  property_type: string
+  title_number: string | null
+  title_deed_name: string | null
+  county: string | null
+  location: string | null
+  size: number | null
+  size_unit: string | null
+  tenure: string | null
+  lease_expiry: string | null
+  status: string
+  land_rent_status: string | null
+  rates_status: string | null
+  deposit_target_months: number
+  completeness: number
+  photo_url: string | null
+  notes: string | null
+  created_at: string
+  updated_at?: string
+  // List rows only
+  unit_count?: number
+  occupied_count?: number
+  monthly_rent_kes?: number
+  deposits_kes?: number
+  service_charge_kes?: number
+}
+
+export type PropertyUnit = {
+  unit_id: string
+  property_id: string
+  label: string
+  bedrooms: number | null
+  status: string
+  default_rent_kes: number | null
+  default_rent_usd: number | null
+  notes: string | null
+  photo_urls?: string[] | null
+}
+
+export type Tenant = {
+  tenant_id: string
+  type: "individual" | "company" | string
+  full_name: string | null
+  company_name: string | null
+  registration_number?: string | null
+  contact_person_name?: string | null
+  contact_person_phone?: string | null
+  contact_person_email?: string | null
+  date_of_birth?: string | null
+  phone: string | null
+  mobile?: string | null
+  email: string | null
+  id_type?: string | null
+  id_number?: string | null
+  kra_pin?: string | null
+  next_of_kin_name?: string | null
+  next_of_kin_phone?: string | null
+  next_of_kin_relationship?: string | null
+  emergency_contact_name?: string | null
+  emergency_contact_phone?: string | null
+  emergency_contact_relationship?: string | null
+  status: string
+  consent: boolean
+  completeness: number
+  photo_url: string | null
+  notes: string | null
+  created_at: string
+}
+
+export type Lease = {
+  lease_id: string
+  property_id: string
+  unit_id: string
+  tenant_id: string
+  start_date: string | null
+  end_date: string | null
+  monthly_rent_kes: number | null
+  monthly_rent_usd: number | null
+  deposit_kes: number
+  deposit_usd: number
+  deposit_target_months: number
+  required_deposit_kes: number | null
+  deposit_variance_kes: number | null
+  service_charge_kes: number | null
+  service_charge_account_id: string | null
+  rent_routing_account_id: string | null
+  electricity_provider: string | null
+  water_provider: string | null
+  status: string
+  notes: string | null
+  document_url: string | null
+  document_path: string | null
+  created_at: string
+  property_alias?: string
+  unit_label?: string
+  tenant_full_name?: string | null
+  tenant_company_name?: string | null
+}
+
+export type BankAccount = {
+  account_id: string
+  bank_name: string
+  account_name: string
+  branch: string | null
+  account_number: string | null
+  currency: string
+  relationship_manager: string | null
+  contact: string | null
+  is_active: boolean
+}
+
+export type Reminder = {
+  reminder_id: string
+  property_id: string | null
+  tenant_id: string | null
+  lease_id: string | null
+  kind: string
+  title: string
+  detail: string | null
+  due_on: string | null
+  severity: string
+  completed_at: string | null
+  created_at: string
+}
+
+export type Maintenance = {
+  maintenance_id: string
+  property_id: string
+  unit_id: string | null
+  tenant_id: string | null
+  kind: string
+  title: string
+  description: string | null
+  category: string | null
+  priority: string
+  status: string
+  raised_by: string | null
+  raised_at: string | null
+  assigned_to: string | null
+  contractor: string | null
+  cost_kes: number | null
+  resolved_at: string | null
+  resolution_notes: string | null
+  confidential: boolean
+  photo_urls: string[] | null
+  created_at: string
+  updated_at: string
+}
+
+export type RentCollection = {
+  collection_id: string | null
+  lease_id: string
+  period_key: string
+  expected_kes: number | null
+  paid_kes: number
+  outstanding_kes: number | null
+  paid_at: string | null
+  payment_method: string | null
+  payment_ref: string | null
+  notes: string | null
+  property_alias?: string
+  unit_label?: string
+  tenant_full_name?: string | null
+  tenant_company_name?: string | null
+}
+
+export type DepositAlert = {
+  lease_id: string
+  full_name: string | null
+  company_name: string | null
+  property_alias: string
+  unit_label: string
+  deposit_kes: number
+  required: number
+  shortfall: number
+}
+
+export type PropertyDashboard = {
+  total_properties: number
+  total_units: number
+  occupied_units: number
+  occupancy_pct: number
+  active_leases: number
+  monthly_rent_kes: number
+  deposits_kes: number
+  service_charge_kes: number
+  deposit_alerts: DepositAlert[]
+}

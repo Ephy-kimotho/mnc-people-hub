@@ -17,8 +17,9 @@ import {
 import { useSidebar } from "@/components/ui/sidebar"
 import {
   accountItems,
+  allNavItems,
   isActivePath,
-  navItems,
+  sectionForPath,
 } from "@/components/dashboard/nav-items"
 import { UserMenu } from "@/components/dashboard/user-menu"
 import { useAuth } from "@/providers/auth-provider"
@@ -27,9 +28,10 @@ export function DashboardHeader() {
   const pathname = usePathname()
   const { toggleSidebar } = useSidebar()
   const { user } = useAuth()
-  const current = [...navItems, ...accountItems].find((item) =>
+  const current = [...allNavItems, ...accountItems].find((item) =>
     isActivePath(pathname, item.href)
   )
+  const section = sectionForPath(pathname)
 
   return (
     <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur md:px-8 lg:px-12">
@@ -48,7 +50,9 @@ export function DashboardHeader() {
         <BreadcrumbList>
           <BreadcrumbItem className="hidden sm:inline-flex">
             <BreadcrumbLink asChild>
-              <Link href="/overview">MNCPeople</Link>
+              <Link href={section === "property" ? "/property" : "/overview"}>
+                {section === "property" ? "Property" : "MNCPeople"}
+              </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator className="hidden sm:block">

@@ -8,6 +8,7 @@ const restrictedPages: { href: string; roles: RoleName[] }[] = [
   { href: "/users", roles: ["admin"] },
   { href: "/locations", roles: ["admin", "manager"] },
   { href: "/staff", roles: ["admin", "manager"] },
+  { href: "/property", roles: ["admin", "manager"] },
 ]
 
 export function canAccessPage(user: Viewer, pathname: string) {
@@ -22,6 +23,15 @@ export function canAccessPage(user: Viewer, pathname: string) {
 
 export function ownProfilePath(user: Viewer) {
   return user?.staff_id ? `/staff/${user.staff_id}` : undefined
+}
+
+// Property portfolio: managers and admins only
+export function canAccessProperty(user: Viewer) {
+  return user?.role === "admin" || user?.role === "manager"
+}
+
+export function canManageProperty(user: Viewer) {
+  return user?.role === "admin" || user?.role === "manager"
 }
 
 // Adding, editing and deleting staff records, photos and documents
