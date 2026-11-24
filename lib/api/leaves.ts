@@ -2,8 +2,10 @@ import { axiosInstance } from "@/lib/axios"
 import { hoursBetween, leaveTypeLabels } from "@/lib/leave"
 import type { LeaveRequestValues } from "@/lib/schemas/leave"
 import type {
+  CalendarLeave,
   LeaveBalanceRecord,
   LeaveFilters,
+  LeavePolicy,
   LeaveRecord,
   LeaveRequest,
   LeaveStatus,
@@ -14,6 +16,9 @@ import type {
 // Balances live here too so approving or recalling leave refreshes them.
 export const leaveKeys = {
   all: ["leaves"] as const,
+  policies: ["leaves", "policies"] as const,
+  calendar: (start: string, end: string) =>
+    ["leaves", "calendar", start, end] as const,
   list: (filters: LeaveFilters) => ["leaves", "list", filters] as const,
   balances: (staffId: string) => ["leaves", "balances", staffId] as const,
 }
@@ -96,4 +101,27 @@ export async function rejectLeaveRequest(requestId: string, note: string) {
 
 export async function recallLeaveRequest(requestId: string, reason: string) {
   await axiosInstance.post(`/leave/leaves/${requestId}/recall`, { reason })
+}
+
+
+export async function fetchLeavePolicies() {
+  const response = await axiosInstance.get<LeavePolicy[]>("/leave/policies")
+  return response.data
+}
+
+export async function fetchLeaveCalendar(start: string, end: string) {
+  const response = await axiosInstance.get<CalendarLeave[]>(
+    "/leave/calendar",
+    { params: { start, end } }
+  )
+  return response.data
+}
+
+// The .ics endpoint needs the bearer token, so it is downloaded as a blob
+export async function downloadLeaveCalendar(start: string, end: string) {
+  const response = await axiosInstance.get<Blob>("/mnc/calendar.ics", {
+    params: { start, end },
+    responseType: "blob",
+  })
+  return response.data
 }

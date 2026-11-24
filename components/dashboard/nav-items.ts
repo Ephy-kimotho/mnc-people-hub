@@ -2,8 +2,10 @@ import {
   BellIcon,
   Building2Icon,
   CalendarDaysIcon,
-  CirclePlusIcon,
+  CalendarRangeIcon,
   FileTextIcon,
+  ShieldCheckIcon,
+  CirclePlusIcon,
   HouseIcon,
   LandmarkIcon,
   LayoutGridIcon,
@@ -33,11 +35,15 @@ export const navItems: NavItem[] = [
   { title: "Staff Directory", href: "/staff", icon: UsersIcon },
   { title: "Locations", href: "/locations", icon: MapPinIcon },
   { title: "Leave Requests", href: "/leaves", icon: CalendarDaysIcon },
+  { title: "Leave Calendar", href: "/leave-calendar", icon: CalendarRangeIcon },
+  { title: "Leave Policies", href: "/leave-policies", icon: FileTextIcon },
   { title: "Submit Leave", href: "/submit-leave", icon: CirclePlusIcon },
   { title: "Announcements", href: "/announcements", icon: MegaphoneIcon },
   { title: "Users", href: "/users", icon: UserPlus },
+  { title: "Notifications", href: "/notifications", icon: BellIcon },
   { title: "Settings", href: "/settings", icon: SettingsIcon },
   { title: "Audit Log", href: "/audit", icon: ScrollTextIcon },
+  { title: "Auth Audit", href: "/audit/auth", icon: ShieldCheckIcon },
 ]
 
 export type NavSection = "people" | "property"

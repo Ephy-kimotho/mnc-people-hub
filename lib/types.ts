@@ -520,3 +520,69 @@ export type AuditEntry = {
   entity_id: string | null
   description: string | null
 }
+
+// ── Leave policies, calendar, notifications, auth audit ───────────
+
+export type LeavePolicy = {
+  policy_id: string
+  leave_type: string
+  entitlement_days: number
+  carry_over: boolean
+  requires_docs: boolean
+  paid: boolean
+  description: string | null
+}
+
+export type CalendarLeave = {
+  request_id: string
+  staff_name: string
+  staff_role: string
+  leave_type: string
+  start_date: string
+  end_date: string
+  days: number
+}
+
+export type NotificationRecord = {
+  notification_id: string
+  staff_id: string | null
+  staff_name: string | null
+  recipient_email: string | null
+  type: string
+  subject: string | null
+  status: string
+  attempts: number
+  error_message: string | null
+  sent_at: string | null
+  created_at: string
+}
+
+export type NotificationStats = {
+  total: number
+  sent: number
+  failed: number
+  pending: number
+  delivery_rate: number
+  by_type: { type: string; count: number }[]
+}
+
+export type AuthAuditEntry = {
+  id: number
+  timestamp: string
+  user_id: string | null
+  username: string | null
+  role: string | null
+  ip_address: string | null
+  action: string
+  entity_type: string | null
+  entity_id: string | null
+  details: string | null
+  service: string
+}
+
+export type AuthAuditPage = {
+  total: number
+  limit: number
+  offset: number
+  entries: AuthAuditEntry[]
+}

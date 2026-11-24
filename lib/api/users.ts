@@ -52,3 +52,11 @@ export async function changeUserAccess(
 ) {
   await axiosInstance.post(`/auth/users/${userId}/${action}`)
 }
+
+
+export async function resetUserPassword(userId: string, newPassword: string) {
+  await axiosInstance.post(
+    `/auth/users/${encodeURIComponent(userId)}/reset-password`,
+    { new_password: newPassword }
+  )
+}
