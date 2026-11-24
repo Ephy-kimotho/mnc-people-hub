@@ -49,7 +49,7 @@ export const navItems: NavItem[] = [
 export type NavSection = "people" | "property"
 
 export const propertyNavItems: NavItem[] = [
-  { title: "Property Overview", href: "/property", icon: HouseIcon },
+  { title: "Dashboard", href: "/property", icon: HouseIcon },
   { title: "Properties", href: "/property/properties", icon: Building2Icon },
   { title: "Tenants", href: "/property/tenants", icon: UsersIcon },
   { title: "Leases", href: "/property/leases", icon: FileTextIcon },

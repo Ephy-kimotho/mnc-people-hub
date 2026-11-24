@@ -32,10 +32,11 @@ export function usePropertyDashboard() {
   })
 }
 
-export function useProperties() {
+export function useProperties({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: propertyKeys.properties(),
     queryFn: fetchProperties,
+    enabled,
   })
 }
 
@@ -55,19 +56,27 @@ export function useUnits(propertyId: string) {
   })
 }
 
-export function useTenants(propertyId?: string) {
+export function useTenants(
+  propertyId?: string,
+  { enabled = true }: { enabled?: boolean } = {}
+) {
   return useQuery({
     queryKey: propertyKeys.tenants(propertyId),
     queryFn: () => fetchTenants(propertyId),
     placeholderData: keepPreviousData,
+    enabled,
   })
 }
 
-export function useLeases(filters: { property_id?: string; status?: string }) {
+export function useLeases(
+  filters: { property_id?: string; status?: string },
+  { enabled = true }: { enabled?: boolean } = {}
+) {
   return useQuery({
     queryKey: propertyKeys.leases(filters),
     queryFn: () => fetchLeases(filters),
     placeholderData: keepPreviousData,
+    enabled,
   })
 }
 

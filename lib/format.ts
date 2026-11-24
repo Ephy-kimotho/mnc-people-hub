@@ -44,9 +44,11 @@ export function formatAmount(amount: number) {
   )
 }
 
-// "KES 1,000,000"; currency code plus a grouped amount
-export function formatCurrency(amount: number, currency = "KES") {
-  return `${currency} ${formatAmount(amount)}`
+// "Ksh 1,000,000"; currency label plus a grouped amount. KES is shown as
+// "Ksh" to match the property dashboard's copy.
+export function formatCurrency(amount: number, currency = "Ksh") {
+  const label = currency === "KES" ? "Ksh" : currency
+  return `${label} ${formatAmount(amount)}`
 }
 
 // "840 KB", "2.4 MB"; file sizes in bytes, rounded for display

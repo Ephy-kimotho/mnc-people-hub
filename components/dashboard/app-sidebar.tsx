@@ -22,6 +22,7 @@ import {
   navItemsForSection,
   sectionForPath,
 } from "@/components/dashboard/nav-items"
+import { SearchDialog } from "@/components/dashboard/search-dialog"
 import { SectionSwitcher } from "@/components/dashboard/section-switcher"
 import { useAuth } from "@/providers/auth-provider"
 
@@ -61,14 +62,18 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
 
-      <div className="pt-4">
+      <div className="pt-3">
+        <SearchDialog />
+      </div>
+
+      <div className="pt-3">
         <SectionSwitcher />
       </div>
 
       <SidebarContent className="px-2 pt-2">
         <SidebarGroup>
           <SidebarGroupLabel className="mb-2 text-[0.7rem] font-semibold tracking-[0.18em] text-brand-ink uppercase">
-            {section === "property" ? "Property" : "Workspace"}
+            {section === "property" ? "Main Menu" : "Workspace"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1.5">
