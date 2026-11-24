@@ -8,7 +8,6 @@ import {
   ShieldIcon,
   TriangleAlertIcon,
 } from "lucide-react"
-import Link from "next/link"
 import { useState } from "react"
 import { format } from "date-fns"
 
@@ -17,6 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { DefaultRentsDialog } from "@/components/property/default-rents-dialog"
 import { useFxRate, usePropertyDashboard } from "@/hooks/use-properties"
 import { getErrorMessage } from "@/lib/api/errors"
 import { formatAmount, formatCurrency, formatDate } from "@/lib/format"
@@ -27,6 +27,7 @@ export function PropertyDashboard() {
   const query = usePropertyDashboard()
   const fx = useFxRate()
   const [view, setView] = useState<ViewMode>("native")
+  const [rentsOpen, setRentsOpen] = useState(false)
   const data = query.data
   const rate = fx.data?.rate ?? null
   const routingRows = data?.routing ?? []
@@ -52,11 +53,11 @@ export function PropertyDashboard() {
         description="Manage your family's properties, monitor occupancy, and stay on top of critical lease events."
         action={
           <Button
-            asChild
             variant="outline"
             className="h-10 self-start rounded-full px-5"
+            onClick={() => setRentsOpen(true)}
           >
-            <Link href="/property/properties">Edit unit default rents</Link>
+            Edit unit default rents
           </Button>
         }
       />
@@ -425,6 +426,11 @@ export function PropertyDashboard() {
           </Card>
         </>
       ) : null}
+
+      <DefaultRentsDialog
+        open={rentsOpen}
+        onOpenChange={setRentsOpen}
+      />
     </div>
   )
 }

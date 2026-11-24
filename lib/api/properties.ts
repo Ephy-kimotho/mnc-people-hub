@@ -28,6 +28,7 @@ export const propertyKeys = {
   properties: () => ["property", "properties"] as const,
   property: (id: string) => ["property", "properties", id] as const,
   units: (id: string) => ["property", "properties", id, "units"] as const,
+  allUnits: () => ["property", "units"] as const,
   tenants: (propertyId?: string) =>
     ["property", "tenants", propertyId ?? "all"] as const,
   leases: (filters: { property_id?: string; status?: string }) =>
@@ -110,6 +111,11 @@ export async function fetchUnits(propertyId: string) {
   const response = await axiosInstance.get<PropertyUnit[]>(
     `/property/properties/${propertyId}/units`
   )
+  return response.data
+}
+
+export async function fetchAllUnits() {
+  const response = await axiosInstance.get<PropertyUnit[]>("/property/units")
   return response.data
 }
 

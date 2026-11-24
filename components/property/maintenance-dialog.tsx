@@ -34,9 +34,11 @@ const labelClass =
 export function MaintenanceDialog({
   open,
   onOpenChange,
+  defaultPropertyId,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
+  defaultPropertyId?: string
 }) {
   const queryClient = useQueryClient()
   const properties = useProperties()
@@ -47,7 +49,7 @@ export function MaintenanceDialog({
   >({
     resolver: zodResolver(maintenanceSchema),
     defaultValues: {
-      property_id: "",
+      property_id: defaultPropertyId ?? "",
       unit_id: "",
       tenant_id: "",
       kind: "maintenance",

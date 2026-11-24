@@ -283,6 +283,9 @@ export type Property = {
   title_deed_name: string | null
   county: string | null
   location: string | null
+  latitude: number | null
+  longitude: number | null
+  google_maps_url: string | null
   size: number | null
   size_unit: string | null
   tenure: string | null
@@ -317,6 +320,8 @@ export type PropertyUnit = {
   default_rent_usd: number | null
   notes: string | null
   photo_urls?: string[] | null
+  // Only present on GET /property/units (all units across the portfolio)
+  property_alias?: string
 }
 
 export type Tenant = {
@@ -427,6 +432,10 @@ export type Maintenance = {
   photo_urls: string[] | null
   created_at: string
   updated_at: string
+  // Joined in by the list/get endpoints
+  property_alias?: string
+  unit_label?: string | null
+  tenant_name?: string | null
 }
 
 export type RentCollection = {

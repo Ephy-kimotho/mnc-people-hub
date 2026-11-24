@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
 import {
+  fetchAllUnits,
   fetchBankAccounts,
   fetchLeases,
   fetchMaintenance,
@@ -53,6 +54,13 @@ export function useUnits(propertyId: string) {
     queryKey: propertyKeys.units(propertyId),
     queryFn: () => fetchUnits(propertyId),
     enabled: Boolean(propertyId),
+  })
+}
+
+export function useAllUnits() {
+  return useQuery({
+    queryKey: propertyKeys.allUnits(),
+    queryFn: fetchAllUnits,
   })
 }
 
