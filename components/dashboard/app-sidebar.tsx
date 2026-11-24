@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation"
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -17,7 +16,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { Eyebrow } from "@/components/dashboard/eyebrow"
 import {
   activeNavHref,
   canSeeNavItem,
@@ -39,15 +37,26 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="items-center border-b border-sidebar-border px-6 py-4">
-        <Link href="/overview" onClick={() => setOpenMobile(false)}>
+      <SidebarHeader className="items-center border-b border-sidebar-border px-5 py-3">
+        <Link
+          href={section === "property" ? "/property" : "/overview"}
+          onClick={() => setOpenMobile(false)}
+        >
           <Image
-            src="/images/mncpeople-logo-transparent.png"
-            alt="MNC People by Manga Capital"
-            width={877}
-            height={689}
+            src={
+              section === "property"
+                ? "/images/propertyhub-logo.png"
+                : "/images/mncpeople-logo-transparent.png"
+            }
+            alt={
+              section === "property"
+                ? "MNC Property by Manga Capital"
+                : "MNC People by Manga Capital"
+            }
+            width={section === "property" ? 926 : 877}
+            height={section === "property" ? 657 : 689}
             priority
-            className="h-auto w-32 dark:invert"
+            className="h-auto w-24 dark:invert"
           />
         </Link>
       </SidebarHeader>
@@ -92,12 +101,6 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="gap-2 border-t border-sidebar-border px-5 py-6">
-        <Eyebrow>Leave guidance</Eyebrow>
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          Kenya Employment Act · 21 working days of annual leave with full pay.
-        </p>
-      </SidebarFooter>
     </Sidebar>
   )
 }
