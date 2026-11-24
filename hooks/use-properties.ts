@@ -11,6 +11,7 @@ import {
   fetchPropertyDashboard,
   fetchReminders,
   fetchRentCollection,
+  fetchTenant,
   fetchTenants,
   fetchUsdKesRate,
   fetchUnits,
@@ -73,6 +74,14 @@ export function useTenants(
     queryFn: () => fetchTenants(propertyId),
     placeholderData: keepPreviousData,
     enabled,
+  })
+}
+
+export function useTenant(tenantId: string) {
+  return useQuery({
+    queryKey: propertyKeys.tenant(tenantId),
+    queryFn: () => fetchTenant(tenantId),
+    enabled: Boolean(tenantId),
   })
 }
 

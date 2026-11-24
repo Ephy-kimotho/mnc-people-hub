@@ -340,6 +340,7 @@ export type Tenant = {
   id_type?: string | null
   id_number?: string | null
   kra_pin?: string | null
+  employer?: string | null
   next_of_kin_name?: string | null
   next_of_kin_phone?: string | null
   next_of_kin_relationship?: string | null
@@ -352,6 +353,20 @@ export type Tenant = {
   photo_url: string | null
   notes: string | null
   created_at: string
+  // Current lease/unit aggregates from the list and get endpoints
+  property_id?: string | null
+  property_alias?: string | null
+  unit_id?: string | null
+  unit_label?: string | null
+  lease_id?: string | null
+  lease_status?: string | null
+  start_date?: string | null
+  end_date?: string | null
+  monthly_rent_kes?: number | null
+  monthly_rent_usd?: number | null
+  deposit_kes?: number | null
+  deposit_usd?: number | null
+  service_charge_kes?: number | null
 }
 
 export type Lease = {

@@ -31,6 +31,7 @@ export const propertyKeys = {
   allUnits: () => ["property", "units"] as const,
   tenants: (propertyId?: string) =>
     ["property", "tenants", propertyId ?? "all"] as const,
+  tenant: (id: string) => ["property", "tenants", "detail", id] as const,
   leases: (filters: { property_id?: string; status?: string }) =>
     ["property", "leases", filters] as const,
   banks: () => ["property", "bank-accounts"] as const,
@@ -148,6 +149,23 @@ export async function fetchTenants(propertyId?: string) {
   return response.data
 }
 
+export async function fetchTenant(tenantId: string) {
+  const response = await axiosInstance.get<Tenant>(
+    `/property/tenants/${tenantId}`
+  )
+  return response.data
+}
+
+export async function uploadTenantPhoto(tenantId: string, file: File) {
+  const body = new FormData()
+  body.append("file", file)
+  const response = await axiosInstance.post<{ photo_url: string }>(
+    `/property/tenants/${tenantId}/photo`,
+    body
+  )
+  return response.data
+}
+
 export async function createTenant(values: TenantInput) {
   const response = await axiosInstance.post<Tenant>(
     "/property/tenants",
@@ -158,7 +176,7 @@ export async function createTenant(values: TenantInput) {
 
 export async function updateTenant(
   tenantId: string,
-  values: Partial<TenantInput>
+  values: Partial<TenantInput> & { status?: string }
 ) {
   const response = await axiosInstance.patch<Tenant>(
     `/property/tenants/${tenantId}`,

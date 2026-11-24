@@ -50,10 +50,22 @@ export const tenantSchema = z
     type: z.enum(["individual", "company"]),
     full_name: optionalText,
     company_name: optionalText,
+    mobile: optionalText,
     phone: optionalText,
     email: z
       .union([z.email("Enter a valid email."), z.literal("")])
       .optional(),
+    id_type: optionalText,
+    id_number: optionalText,
+    kra_pin: optionalText,
+    date_of_birth: optionalText,
+    employer: optionalText,
+    next_of_kin_name: optionalText,
+    next_of_kin_phone: optionalText,
+    next_of_kin_relationship: optionalText,
+    emergency_contact_name: optionalText,
+    emergency_contact_phone: optionalText,
+    emergency_contact_relationship: optionalText,
     notes: optionalText,
     consent: z.boolean(),
   })
