@@ -2,7 +2,6 @@
 
 import {
   ArrowUpRightIcon,
-  Loader2Icon,
   PencilIcon,
   PlusIcon,
   RefreshCwIcon,
@@ -165,11 +164,7 @@ export function LeasesView() {
                             className="rounded-full"
                             onClick={() => open(lease)}
                           >
-                            {query.isFetching ? (
-                              <Loader2Icon className="animate-spin" />
-                            ) : (
-                              <PencilIcon />
-                            )}
+                            <PencilIcon />
                             Edit
                           </Button>
                         ) : null}
