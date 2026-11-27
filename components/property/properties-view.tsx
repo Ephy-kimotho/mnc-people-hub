@@ -74,6 +74,7 @@ const statusBar: Record<string, string> = {
 export function PropertiesView() {
   const { user } = useAuth()
   const canManage = canManageProperty(user)
+  const isAdmin = user?.role === "admin"
   const query = useProperties()
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState<(typeof statusFilters)[number]>("all")
@@ -177,6 +178,7 @@ export function PropertiesView() {
               key={property.property_id}
               property={property}
               canManage={canManage}
+              isAdmin={isAdmin}
               onEdit={() => open("form", property)}
               onDelete={() => open("delete", property)}
             />
@@ -201,11 +203,13 @@ export function PropertiesView() {
 function PropertyCard({
   property,
   canManage,
+  isAdmin,
   onEdit,
   onDelete,
 }: {
   property: Property
   canManage: boolean
+  isAdmin: boolean
   onEdit: () => void
   onDelete: () => void
 }) {
@@ -248,10 +252,17 @@ function PropertyCard({
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={onEdit}>Edit</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem variant="destructive" onSelect={onDelete}>
-                    Delete
-                  </DropdownMenuItem>
+                  {isAdmin ? (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onSelect={onDelete}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </>
+                  ) : null}
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : null}

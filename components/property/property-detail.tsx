@@ -417,6 +417,7 @@ export function PropertyDetail({ propertyId }: { propertyId: string }) {
             <div className="space-y-4 p-5">
               <UnitsCard
                 canManage={canManage}
+                isAdmin={isAdmin}
                 units={units}
                 onAddUnit={() => {
                   setUnit(undefined)
@@ -431,6 +432,7 @@ export function PropertyDetail({ propertyId }: { propertyId: string }) {
 
               <LeasesCard
                 canManage={canManage}
+                isAdmin={isAdmin}
                 leases={leases}
                 onAddLease={() => {
                   setLease(undefined)
@@ -871,12 +873,14 @@ function RentPanel({
 
 function UnitsCard({
   canManage,
+  isAdmin,
   units,
   onAddUnit,
   onEditUnit,
   onDeleteUnit,
 }: {
   canManage: boolean
+  isAdmin: boolean
   units: ReturnType<typeof useUnits>
   onAddUnit: () => void
   onEditUnit: (unit: PropertyUnit) => void
@@ -946,14 +950,16 @@ function UnitsCard({
                     >
                       Edit
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="rounded-full text-destructive"
-                      onClick={() => onDeleteUnit(item)}
-                    >
-                      Delete
-                    </Button>
+                    {isAdmin ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full text-destructive"
+                        onClick={() => onDeleteUnit(item)}
+                      >
+                        Delete
+                      </Button>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
@@ -967,12 +973,14 @@ function UnitsCard({
 
 function LeasesCard({
   canManage,
+  isAdmin,
   leases,
   onAddLease,
   onEditLease,
   onDeleteLease,
 }: {
   canManage: boolean
+  isAdmin: boolean
   leases: ReturnType<typeof useLeases>
   onAddLease: () => void
   onEditLease: (lease: Lease) => void
@@ -1059,13 +1067,17 @@ function LeasesCard({
                       <DropdownMenuItem onSelect={() => onEditLease(lease)}>
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onSelect={() => onDeleteLease(lease)}
-                      >
-                        Delete
-                      </DropdownMenuItem>
+                      {isAdmin ? (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => onDeleteLease(lease)}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </>
+                      ) : null}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : null}

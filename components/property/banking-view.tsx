@@ -35,6 +35,7 @@ function maskAccount(number: string | null) {
 export function BankingView() {
   const { user } = useAuth()
   const canManage = canManageProperty(user)
+  const isAdmin = user?.role === "admin"
   const accounts = useBankAccounts()
   const [period, setPeriod] = useState(format(new Date(), "yyyy-MM"))
   const rent = useRentCollection(period)
@@ -63,7 +64,7 @@ export function BankingView() {
               Used for rent routing and service charges.
             </p>
           </div>
-          {canManage ? (
+          {isAdmin ? (
             <Button
               className="h-9 rounded-full px-4"
               onClick={() => open("bank")}
@@ -101,7 +102,7 @@ export function BankingView() {
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <Badge variant="outline">{account.currency}</Badge>
-                    {canManage ? (
+                    {isAdmin ? (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button

@@ -57,6 +57,7 @@ const UNASSIGNED = "No active lease"
 export function TenantsView() {
   const { user } = useAuth()
   const canManage = canManageProperty(user)
+  const isAdmin = user?.role === "admin"
   const query = useTenants()
   const [search, setSearch] = useState("")
   const [propertyFilter, setPropertyFilter] = useState("all")
@@ -276,13 +277,17 @@ export function TenantsView() {
                               >
                                 Edit
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onSelect={() => open("delete", tenant)}
-                              >
-                                Delete
-                              </DropdownMenuItem>
+                              {isAdmin ? (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    variant="destructive"
+                                    onSelect={() => open("delete", tenant)}
+                                  >
+                                    Delete
+                                  </DropdownMenuItem>
+                                </>
+                              ) : null}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         ) : null}
