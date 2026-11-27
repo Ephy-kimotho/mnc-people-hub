@@ -157,6 +157,23 @@ export async function fetchLeavePolicies() {
   return response.data
 }
 
+export async function updateLeavePolicy(
+  policyId: string,
+  values: {
+    entitlement_days?: number
+    carry_over?: boolean
+    requires_docs?: boolean
+    paid?: boolean
+    description?: string
+  }
+) {
+  const response = await axiosInstance.patch<LeavePolicy>(
+    `/leave/policies/${policyId}`,
+    values
+  )
+  return response.data
+}
+
 export async function fetchLeaveCalendar(start: string, end: string) {
   const response = await axiosInstance.get<CalendarLeave[]>(
     "/leave/calendar",

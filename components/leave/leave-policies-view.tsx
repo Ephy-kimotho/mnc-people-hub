@@ -1,16 +1,30 @@
 "use client"
 
-import { FileTextIcon } from "lucide-react"
+import { FileTextIcon, PencilIcon } from "lucide-react"
+import { useState } from "react"
 
 import { PageHeader } from "@/components/dashboard/page-header"
+import { LeavePolicyDialog } from "@/components/leave/leave-policy-dialog"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLeavePolicies } from "@/hooks/use-extras"
 import { getErrorMessage } from "@/lib/api/errors"
+import type { LeavePolicy } from "@/lib/types"
+import { useAuth } from "@/providers/auth-provider"
 
 export function LeavePoliciesView() {
+  const { user } = useAuth()
+  const canEdit = user?.role === "admin"
   const query = useLeavePolicies()
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<LeavePolicy>()
+
+  function edit(policy: LeavePolicy) {
+    setEditing(policy)
+    setOpen(true)
+  }
 
   return (
     <div className="space-y-8">
@@ -60,12 +74,29 @@ export function LeavePoliciesView() {
                   {policy.requires_docs ? (
                     <Badge variant="outline">Docs required</Badge>
                   ) : null}
+                  {canEdit ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-full"
+                      onClick={() => edit(policy)}
+                    >
+                      <PencilIcon />
+                      Edit
+                    </Button>
+                  ) : null}
                 </div>
               </li>
             ))}
           </ul>
         </Card>
       )}
+
+      <LeavePolicyDialog
+        open={open}
+        onOpenChange={setOpen}
+        policy={editing}
+      />
     </div>
   )
 }
