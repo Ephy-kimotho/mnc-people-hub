@@ -94,7 +94,7 @@ The Replit export is structurally complete but has major missing values:
 Additional source notes:
 
 - Replit’s property activity feed was almost entirely QA utility-verification entries; it was not imported. The meaningful property flags were preserved in internal notes.
-- One portfolio-wide deposit-holding note (Sanlam Muthaiga fixed deposit) has no equivalent field and was not stored.
+- The portfolio-wide deposit-holding note (Sanlam Muthaiga fixed deposit) is stored in **Settings → `deposit_holding_note`**.
 
 As a result, the dashboard shows **Ksh 0 + USD 2,500 monthly rent** and the lease register shows Ksh 0, even though Replit’s property cards show rent totals. The app derives rent from leases; Replit’s lease API does not expose those amounts.
 
