@@ -13,11 +13,15 @@ import type {
   BankAccount,
   DepositTopup,
   FxRate,
+  InsurancePolicy,
   Lease,
   Maintenance,
   NeedsAttentionAlert,
   Property,
+  PropertyContact,
   PropertyDashboard,
+  PropertyDocument,
+  PropertyOwner,
   PropertyUnit,
   Reminder,
   RentCollection,
@@ -31,6 +35,13 @@ export const propertyKeys = {
   property: (id: string) => ["property", "properties", id] as const,
   units: (id: string) => ["property", "properties", id, "units"] as const,
   allUnits: () => ["property", "units"] as const,
+  documents: (id: string) =>
+    ["property", "properties", id, "documents"] as const,
+  insurance: (id: string) =>
+    ["property", "properties", id, "insurance"] as const,
+  owners: (id: string) => ["property", "properties", id, "owners"] as const,
+  contacts: (id: string) =>
+    ["property", "properties", id, "contacts"] as const,
   tenants: (propertyId?: string) =>
     ["property", "tenants", propertyId ?? "all"] as const,
   tenant: (id: string) => ["property", "tenants", "detail", id] as const,
@@ -142,6 +153,127 @@ export async function updateUnit(unitId: string, values: Partial<UnitInput>) {
 
 export async function deleteUnit(unitId: string) {
   await axiosInstance.delete(`/property/units/${unitId}`)
+}
+
+// ── Property documents & photos ───────────────────────────────────
+
+export async function fetchPropertyDocuments(propertyId: string) {
+  const response = await axiosInstance.get<PropertyDocument[]>(
+    `/property/properties/${propertyId}/documents`
+  )
+  return response.data
+}
+
+export async function uploadPropertyDocument(
+  propertyId: string,
+  values: { name: string; category: string; file: File }
+) {
+  const body = new FormData()
+  body.append("file", values.file)
+  body.append("name", values.name)
+  body.append("category", values.category)
+  const response = await axiosInstance.post<PropertyDocument>(
+    `/property/properties/${propertyId}/documents`,
+    body
+  )
+  return response.data
+}
+
+export async function deletePropertyDocument(documentId: string) {
+  await axiosInstance.delete(`/property/property-documents/${documentId}`)
+}
+
+export async function uploadPropertyPhoto(propertyId: string, file: File) {
+  const body = new FormData()
+  body.append("file", file)
+  const response = await axiosInstance.post<{ photo_url: string }>(
+    `/property/properties/${propertyId}/photo`,
+    body
+  )
+  return response.data
+}
+
+export async function deletePropertyPhoto(propertyId: string) {
+  await axiosInstance.delete(`/property/properties/${propertyId}/photo`)
+}
+
+// ── Insurance ─────────────────────────────────────────────────────
+
+export async function fetchInsurance(propertyId: string) {
+  const response = await axiosInstance.get<InsurancePolicy[]>(
+    `/property/properties/${propertyId}/insurance`
+  )
+  return response.data
+}
+
+export async function createInsurance(
+  propertyId: string,
+  values: {
+    insurance_type: string
+    insurer?: string
+    policy_number?: string
+    premium_kes?: number
+    valid_from?: string
+    valid_until?: string
+    status: string
+    notes?: string
+  }
+) {
+  const response = await axiosInstance.post<InsurancePolicy>(
+    `/property/properties/${propertyId}/insurance`,
+    clean(values)
+  )
+  return response.data
+}
+
+export async function deleteInsurance(policyId: string) {
+  await axiosInstance.delete(`/property/insurance-policies/${policyId}`)
+}
+
+// ── Ownership & contacts ──────────────────────────────────────────
+
+export async function fetchOwners(propertyId: string) {
+  const response = await axiosInstance.get<PropertyOwner[]>(
+    `/property/properties/${propertyId}/owners`
+  )
+  return response.data
+}
+
+export async function createOwner(
+  propertyId: string,
+  values: { name: string; entity_type: string; share_pct: number }
+) {
+  const response = await axiosInstance.post<PropertyOwner>(
+    `/property/properties/${propertyId}/owners`,
+    clean(values)
+  )
+  return response.data
+}
+
+export async function deleteOwner(ownerId: string) {
+  await axiosInstance.delete(`/property/owners/${ownerId}`)
+}
+
+export async function fetchContacts(propertyId: string) {
+  const response = await axiosInstance.get<PropertyContact[]>(
+    `/property/properties/${propertyId}/contacts`
+  )
+  return response.data
+}
+
+export async function createContact(
+  propertyId: string,
+  values: { role: string; name: string; phone?: string; is_primary: boolean }
+) {
+  const response = await axiosInstance.post<PropertyContact>(
+    `/property/properties/${propertyId}/contacts`,
+    clean(values)
+  )
+  return response.data
+}
+
+export async function deleteContact(contactId: string) {
+  await axiosInstance.delete(`/property/contacts/${contactId}`)
 }
 
 // ── Tenants ───────────────────────────────────────────────────────

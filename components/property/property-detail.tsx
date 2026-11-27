@@ -51,6 +51,10 @@ import { DeleteUnitDialog } from "@/components/property/delete-unit-dialog"
 import { LeaseDialog } from "@/components/property/lease-dialog"
 import { MaintenanceDialog } from "@/components/property/maintenance-dialog"
 import { PropertyDialog } from "@/components/property/property-dialog"
+import { PropertyDocumentsTab } from "@/components/property/property-documents-tab"
+import { PropertyInsuranceTab } from "@/components/property/property-insurance-tab"
+import { PropertyOwnershipTab } from "@/components/property/property-ownership-tab"
+import { PropertyServiceChargesTab } from "@/components/property/property-service-charges-tab"
 import { RentPaymentDialog } from "@/components/property/rent-payment-dialog"
 import { UnitDialog } from "@/components/property/unit-dialog"
 import {
@@ -267,9 +271,13 @@ export function PropertyDetail({ propertyId }: { propertyId: string }) {
             >
               {[
                 ["details", "Details & Compliance"],
+                ["documents", "Documents"],
+                ["insurance", "Insurance"],
                 ["maintenance", "Maintenance"],
+                ["service", "Service Charges"],
                 ["rent", "Rent Collection"],
                 ["units", "Units & Leases"],
+                ["ownership", "Ownership & Contacts"],
               ].map(([value, label]) => (
                 <TabsTrigger key={value} value={value} className="px-3">
                   {label}
@@ -375,8 +383,30 @@ export function PropertyDetail({ propertyId }: { propertyId: string }) {
             </div>
           </TabsContent>
 
+          <TabsContent value="documents">
+            <PropertyDocumentsTab
+              property={data}
+              propertyId={propertyId}
+              canManage={canManage}
+            />
+          </TabsContent>
+
+          <TabsContent value="insurance">
+            <PropertyInsuranceTab
+              propertyId={propertyId}
+              canManage={canManage}
+            />
+          </TabsContent>
+
           <TabsContent value="maintenance">
             <MaintenancePanel propertyId={propertyId} canManage={canManage} />
+          </TabsContent>
+
+          <TabsContent value="service">
+            <PropertyServiceChargesTab
+              property={data}
+              propertyId={propertyId}
+            />
           </TabsContent>
 
           <TabsContent value="rent">
@@ -413,6 +443,13 @@ export function PropertyDetail({ propertyId }: { propertyId: string }) {
                 onDeleteLease={setDeleteLease}
               />
             </div>
+          </TabsContent>
+
+          <TabsContent value="ownership">
+            <PropertyOwnershipTab
+              propertyId={propertyId}
+              canManage={canManage}
+            />
           </TabsContent>
         </Tabs>
       </Card>

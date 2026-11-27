@@ -3,14 +3,18 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import {
   fetchAllUnits,
   fetchBankAccounts,
+  fetchContacts,
   fetchDepositTopups,
+  fetchInsurance,
   fetchLeases,
   fetchMaintenance,
   fetchMaintenanceSummary,
   fetchNeedsAttention,
+  fetchOwners,
   fetchProperties,
   fetchProperty,
   fetchPropertyDashboard,
+  fetchPropertyDocuments,
   fetchReminders,
   fetchRentCollection,
   fetchTenant,
@@ -48,6 +52,38 @@ export function useProperty(propertyId: string) {
   return useQuery({
     queryKey: propertyKeys.property(propertyId),
     queryFn: () => fetchProperty(propertyId),
+    enabled: Boolean(propertyId),
+  })
+}
+
+export function usePropertyDocuments(propertyId: string) {
+  return useQuery({
+    queryKey: propertyKeys.documents(propertyId),
+    queryFn: () => fetchPropertyDocuments(propertyId),
+    enabled: Boolean(propertyId),
+  })
+}
+
+export function useInsurance(propertyId: string) {
+  return useQuery({
+    queryKey: propertyKeys.insurance(propertyId),
+    queryFn: () => fetchInsurance(propertyId),
+    enabled: Boolean(propertyId),
+  })
+}
+
+export function useOwners(propertyId: string) {
+  return useQuery({
+    queryKey: propertyKeys.owners(propertyId),
+    queryFn: () => fetchOwners(propertyId),
+    enabled: Boolean(propertyId),
+  })
+}
+
+export function useContacts(propertyId: string) {
+  return useQuery({
+    queryKey: propertyKeys.contacts(propertyId),
+    queryFn: () => fetchContacts(propertyId),
     enabled: Boolean(propertyId),
   })
 }

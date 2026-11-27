@@ -579,6 +579,51 @@ export type PropertyAssignment = {
   created_at: string
 }
 
+export type PropertyDocument = {
+  document_id: string
+  property_id: string
+  name: string
+  category: string
+  public_url: string | null
+  mime_type: string | null
+  file_size_bytes: number | null
+  uploaded_at: string
+}
+
+export type InsurancePolicy = {
+  policy_id: string
+  property_id: string
+  insurance_type: string
+  insurer: string | null
+  policy_number: string | null
+  premium_kes: number | null
+  valid_from: string | null
+  valid_until: string | null
+  status: string
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type PropertyOwner = {
+  owner_id: string
+  property_id: string
+  name: string
+  entity_type: string
+  share_pct: number
+  created_at: string
+}
+
+export type PropertyContact = {
+  contact_id: string
+  property_id: string
+  role: string
+  name: string
+  phone: string | null
+  is_primary: boolean
+  created_at: string
+}
+
 // ── MNC core ──────────────────────────────────────────────────────
 
 export type Announcement = {
