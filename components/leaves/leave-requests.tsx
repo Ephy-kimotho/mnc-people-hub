@@ -154,7 +154,7 @@ export function LeaveRequests() {
       <Card className="@container gap-0 rounded-2xl py-0 shadow-xs">
         <Tabs defaultValue="pending" className="gap-0">
           {/* Scrolls sideways on narrow screens instead of wrapping the tabs */}
-          <div className="overflow-x-auto border-b px-4">
+          <div className="overflow-x-auto border-b px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <TabsList
               variant="line"
               className="gap-2 pb-1 group-data-horizontal/tabs:h-13"

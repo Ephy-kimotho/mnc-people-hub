@@ -264,7 +264,7 @@ export function PropertyDetail({ propertyId }: { propertyId: string }) {
 
       <Card className="@container gap-0 rounded-2xl py-0 shadow-xs">
         <Tabs defaultValue="details" className="gap-0">
-          <div className="overflow-x-auto border-b px-4">
+          <div className="overflow-x-auto border-b px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <TabsList
               variant="line"
               className="gap-2 pb-1 group-data-horizontal/tabs:h-13"
