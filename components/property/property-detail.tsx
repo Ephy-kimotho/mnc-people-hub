@@ -51,6 +51,7 @@ import { DeleteUnitDialog } from "@/components/property/delete-unit-dialog"
 import { LeaseDialog } from "@/components/property/lease-dialog"
 import { MaintenanceDialog } from "@/components/property/maintenance-dialog"
 import { PropertyDialog } from "@/components/property/property-dialog"
+import { PropertyComplianceCard } from "@/components/property/property-compliance-card"
 import { PropertyDocumentsTab } from "@/components/property/property-documents-tab"
 import { PropertyInsuranceTab } from "@/components/property/property-insurance-tab"
 import { PropertyOwnershipTab } from "@/components/property/property-ownership-tab"
@@ -345,24 +346,10 @@ export function PropertyDetail({ propertyId }: { propertyId: string }) {
                   </dl>
                 </Card>
 
-                <Card className="gap-4 rounded-2xl p-6">
-                  <h2 className="font-heading text-lg font-semibold">
-                    Compliance &amp; status
-                  </h2>
-                  <dl className="grid gap-4 sm:grid-cols-2">
-                    <Detail
-                      label="Land rent"
-                      value={data.land_rent_status || "Unknown"}
-                    />
-                    <Detail
-                      label="County rates"
-                      value={data.rates_status || "Unknown"}
-                    />
-                  </dl>
-                  <p className="text-xs text-muted-foreground">
-                    Update these from Edit property.
-                  </p>
-                </Card>
+                <PropertyComplianceCard
+                  property={data}
+                  canManage={canManage}
+                />
 
                 {data.notes ? (
                   <Card className="gap-2 rounded-2xl p-6">

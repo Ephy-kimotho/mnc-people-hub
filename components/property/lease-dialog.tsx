@@ -95,7 +95,9 @@ function LeaseForm({ lease, onDone }: { lease?: Lease; onDone: () => void }) {
   const units = useUnits(propertyId)
 
   const [docName, setDocName] = useState<string | null>(
-    lease?.has_document ? "Attached lease document" : null
+    lease?.has_document
+      ? lease.document_name || "Attached lease document"
+      : null
   )
   const docInput = useRef<HTMLInputElement>(null)
 

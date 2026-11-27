@@ -44,6 +44,12 @@ const statuses = [
   "Inactive",
 ]
 const complianceStatuses = ["Unknown", "Paid", "In Arrears", "Exempt"]
+const gazetteStatuses = [
+  "Not Gazetted",
+  "In Progress",
+  "Gazetted",
+  "Not Required",
+]
 
 export function PropertyDialog({
   open,
@@ -99,6 +105,7 @@ function PropertyForm({
       status: property?.status ?? "Active",
       land_rent_status: property?.land_rent_status ?? "Unknown",
       rates_status: property?.rates_status ?? "Unknown",
+      gazette_status: property?.gazette_status ?? "Not Gazetted",
       latitude: property?.latitude ?? undefined,
       longitude: property?.longitude ?? undefined,
       google_maps_url: property?.google_maps_url ?? "",
@@ -348,7 +355,7 @@ function PropertyForm({
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <div className="grid gap-2">
             <FieldLabel htmlFor="property-land-rent" className={labelClass}>
               Land rent status
@@ -375,6 +382,22 @@ function PropertyForm({
               {...form.register("rates_status")}
             >
               {complianceStatuses.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2">
+            <FieldLabel htmlFor="property-gazette" className={labelClass}>
+              Gazette status
+            </FieldLabel>
+            <select
+              id="property-gazette"
+              className={inputClass}
+              {...form.register("gazette_status")}
+            >
+              {gazetteStatuses.map((option) => (
                 <option key={option} value={option}>
                   {option}
                 </option>

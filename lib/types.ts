@@ -296,6 +296,7 @@ export type Property = {
   status: string
   land_rent_status: string | null
   rates_status: string | null
+  gazette_status: string | null
   deposit_target_months: number
   completeness: number
   photo_url: string | null
@@ -395,12 +396,24 @@ export type Lease = {
   notes: string | null
   document_url?: string | null
   document_path?: string | null
+  document_name?: string | null
   has_document?: boolean
   created_at: string
   property_alias?: string
   unit_label?: string
   tenant_full_name?: string | null
   tenant_company_name?: string | null
+}
+
+export type PropertyPayment = {
+  payment_id: string
+  property_id: string
+  payment_type: string
+  amount_kes: number
+  paid_on: string
+  reference: string | null
+  notes: string | null
+  created_at: string
 }
 
 export type BankAccount = {

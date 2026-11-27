@@ -15,6 +15,7 @@ import {
   fetchProperty,
   fetchPropertyDashboard,
   fetchPropertyDocuments,
+  fetchPropertyPayments,
   fetchReminders,
   fetchRentCollection,
   fetchTenant,
@@ -86,6 +87,14 @@ export function useContacts(propertyId: string) {
   return useQuery({
     queryKey: propertyKeys.contacts(propertyId),
     queryFn: () => fetchContacts(propertyId),
+    enabled: Boolean(propertyId),
+  })
+}
+
+export function usePropertyPayments(propertyId: string) {
+  return useQuery({
+    queryKey: propertyKeys.payments(propertyId),
+    queryFn: () => fetchPropertyPayments(propertyId),
     enabled: Boolean(propertyId),
   })
 }

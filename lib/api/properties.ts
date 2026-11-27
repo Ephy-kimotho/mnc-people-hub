@@ -22,6 +22,7 @@ import type {
   PropertyDashboard,
   PropertyDocument,
   PropertyOwner,
+  PropertyPayment,
   PropertyUnit,
   Reminder,
   RentCollection,
@@ -44,6 +45,8 @@ export const propertyKeys = {
   owners: (id: string) => ["property", "properties", id, "owners"] as const,
   contacts: (id: string) =>
     ["property", "properties", id, "contacts"] as const,
+  payments: (id: string) =>
+    ["property", "properties", id, "payments"] as const,
   tenants: (propertyId?: string) =>
     ["property", "tenants", propertyId ?? "all"] as const,
   tenant: (id: string) => ["property", "tenants", "detail", id] as const,
@@ -289,6 +292,34 @@ export async function createContact(
 
 export async function deleteContact(contactId: string) {
   await axiosInstance.delete(`/property/contacts/${contactId}`)
+}
+
+export async function fetchPropertyPayments(propertyId: string) {
+  const response = await axiosInstance.get<PropertyPayment[]>(
+    `/property/properties/${propertyId}/payments`
+  )
+  return response.data
+}
+
+export async function createPropertyPayment(
+  propertyId: string,
+  values: {
+    payment_type: string
+    amount_kes: number
+    paid_on?: string
+    reference?: string
+    notes?: string
+  }
+) {
+  const response = await axiosInstance.post<PropertyPayment>(
+    `/property/properties/${propertyId}/payments`,
+    clean(values)
+  )
+  return response.data
+}
+
+export async function deletePropertyPayment(paymentId: string) {
+  await axiosInstance.delete(`/property/property-payments/${paymentId}`)
 }
 
 // ── Tenants ───────────────────────────────────────────────────────
