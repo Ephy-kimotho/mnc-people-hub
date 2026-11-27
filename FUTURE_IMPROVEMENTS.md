@@ -128,10 +128,12 @@ Tasks:
 
 Documents already use short-lived presigned URLs (900 seconds) and the API no longer exposes storage keys or public URLs. The bucket policy itself still needs locking down.
 
+**Remaining blocker:** the bucket still has a public `r2.dev` URL. Staff document links were fixed to request fresh signed URLs, but property/tenant profile photos and maintenance/unit photos still render from public URLs. Wire those through their signed GET endpoints first, then disable the `r2.dev` public access in Cloudflare.
+
 Tasks:
 
-- [ ] Block all public access on the R2 bucket.
-- [ ] Disable public bucket URLs.
+- [ ] Point property, tenant and maintenance/unit photos at their signed GET endpoints.
+- [ ] Block all public access on the R2 bucket and disable the `r2.dev` subdomain.
 - [ ] Rotate R2 access keys if they were ever exposed.
 - [ ] Re-test upload, view and delete for staff, leave, property, tenant and lease documents.
 - [ ] Confirm presigned URLs expire and cannot be reused after expiry.
@@ -276,6 +278,7 @@ Do not re-open these unless a regression is found:
 - **Audit log** populated across Staff, Leave, Property and Workspace changes, including old/new values and stable ordering.
 - **Property demo replaced with the Replit portfolio** — 20 properties, 38 units, 36 tenants, 36 active leases, 35 bank accounts, 20 owners and 8 insurance policies.
 - **People demo replaced with the Replit PeopleHub** — 6 staff, 16 leave requests, 2 locations, 24 balance rows, 20 documents and 5 profile photos.
+- **Staff documents** now open through 15-minute signed URLs; the API no longer exposes storage keys or public bucket links.
 - Leave edit `Decimal - float` crash fixed.
 
 ---
