@@ -5,6 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  color-scheme: light;
   --background: oklch(0.982 0.005 85);
   --foreground: oklch(0.22 0.012 255);
   --card: oklch(0.995 0.002 85);
@@ -47,6 +48,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.17 0.006 75);
   --foreground: oklch(0.96 0.005 85);
   --card: oklch(0.21 0.006 75);
@@ -85,6 +87,12 @@
   --sidebar-accent-foreground: oklch(0.96 0.005 85);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.65 0.1 80);
+}
+
+/* Native select options follow the active theme */
+select option {
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
 @theme inline {

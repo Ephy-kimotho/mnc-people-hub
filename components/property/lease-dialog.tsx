@@ -117,7 +117,7 @@ function LeaseForm({ lease, onDone }: { lease?: Lease; onDone: () => void }) {
     >
       <fieldset
         disabled={mutation.isPending}
-        className="grid max-h-[72vh] gap-4 overflow-y-auto px-6 py-5"
+        className="grid max-h-[72vh] gap-4 overflow-x-hidden overflow-y-auto px-6 py-5"
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
