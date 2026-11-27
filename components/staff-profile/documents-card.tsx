@@ -4,10 +4,12 @@ import { useQuery } from "@tanstack/react-query"
 import {
   FileImageIcon,
   FileTextIcon,
+  Loader2Icon,
   Trash2Icon,
   UploadIcon,
 } from "lucide-react"
 import { useState } from "react"
+import toast from "react-hot-toast"
 
 import { DeleteDocumentDialog } from "@/components/staff-profile/delete-document-dialog"
 import { UploadDocumentDialog } from "@/components/staff-profile/upload-document-dialog"
@@ -16,7 +18,11 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getErrorMessage } from "@/lib/api/errors"
-import { fetchStaffDocuments, staffKeys } from "@/lib/api/staff"
+import {
+  fetchStaffDocumentUrl,
+  fetchStaffDocuments,
+  staffKeys,
+} from "@/lib/api/staff"
 import { formatDate, formatFileSize } from "@/lib/format"
 import { canManageStaff } from "@/lib/permissions"
 import { documentCategoryLabels } from "@/lib/staff"
@@ -167,6 +173,26 @@ function DocumentRow({
   onDelete?: () => void
 }) {
   const Icon = doc.mime_type.startsWith("image/") ? FileImageIcon : FileTextIcon
+  const [opening, setOpening] = useState(false)
+
+  async function openDocument() {
+    // Open the tab immediately so the browser treats it as part of the click.
+    const tab = window.open("about:blank", "_blank")
+    if (!tab) {
+      toast.error("Allow pop-ups to open this document.")
+      return
+    }
+    setOpening(true)
+    try {
+      const { url } = await fetchStaffDocumentUrl(doc.staff_id, doc.document_id)
+      tab.location.href = url
+    } catch (error) {
+      tab.close()
+      toast.error(getErrorMessage(error, "Couldn't open the document."))
+    } finally {
+      setOpening(false)
+    }
+  }
 
   return (
     <li className="flex items-center gap-3 rounded-xl border px-4 py-3">
@@ -174,16 +200,19 @@ function DocumentRow({
         <Icon className="size-4" />
       </span>
       <div className="min-w-0 flex-1">
-        {/* The name opens the file in a new tab */}
-        <a
-          href={doc.public_url}
-          target="_blank"
-          rel="noopener noreferrer"
+        {/* Fetches a fresh signed URL instead of exposing a public bucket link */}
+        <button
+          type="button"
+          onClick={openDocument}
+          disabled={opening}
           title={doc.filename}
-          className="block truncate text-sm font-medium underline-offset-4 hover:underline"
+          className="flex max-w-full items-center gap-1.5 truncate text-sm font-medium underline-offset-4 hover:underline disabled:opacity-70"
         >
-          {doc.filename}
-        </a>
+          {opening ? (
+            <Loader2Icon className="size-3.5 shrink-0 animate-spin" />
+          ) : null}
+          <span className="truncate">{doc.filename}</span>
+        </button>
         <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
           <span>{formatFileSize(doc.file_size_bytes)}</span>
           <span aria-hidden>·</span>

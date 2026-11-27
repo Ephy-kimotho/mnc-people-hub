@@ -126,8 +126,8 @@ export type DocumentCategory =
   | "RecommendationLetter"
   | "Other"
 
-// A file in GET /staff/staff/{id}/documents. `public_url` can be opened
-// without signing in; `uploaded_by` is a user id.
+// A file in GET /staff/staff/{id}/documents. The file itself is opened
+// through a short-lived signed URL; no public storage link is returned.
 export type StaffDocument = {
   document_id: string
   staff_id: string
@@ -137,8 +137,6 @@ export type StaffDocument = {
   filename: string
   mime_type: string
   file_size_bytes: number
-  storage_path: string
-  public_url: string
   restricted: boolean
   expiry_date: string | null
   notes: string | null

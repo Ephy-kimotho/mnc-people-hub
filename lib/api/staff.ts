@@ -160,6 +160,19 @@ export async function fetchStaffDocuments(staffId: string) {
   return response.data
 }
 
+export async function fetchStaffDocumentUrl(
+  staffId: string,
+  documentId: string
+) {
+  const response = await axiosInstance.get<{
+    url: string
+    expires_in: number | null
+    filename: string
+    category: string
+  }>(`/staff/staff/${staffId}/documents/${documentId}`)
+  return response.data
+}
+
 export async function deleteStaffDocument(staffId: string, documentId: string) {
   await axiosInstance.delete(`/staff/staff/${staffId}/documents/${documentId}`)
 }
