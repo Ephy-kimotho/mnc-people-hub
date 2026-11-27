@@ -183,6 +183,15 @@ export async function deletePropertyDocument(documentId: string) {
   await axiosInstance.delete(`/property/property-documents/${documentId}`)
 }
 
+export async function fetchPropertyDocumentUrl(documentId: string) {
+  const response = await axiosInstance.get<{
+    url: string
+    expires_in: number | null
+    filename: string
+  }>(`/property/property-documents/${documentId}/url`)
+  return response.data
+}
+
 export async function uploadPropertyPhoto(propertyId: string, file: File) {
   const body = new FormData()
   body.append("file", file)

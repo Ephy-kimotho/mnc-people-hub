@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
+  ExternalLinkIcon,
   FileTextIcon,
   ImageIcon,
   Loader2Icon,
@@ -21,6 +22,7 @@ import { getErrorMessage } from "@/lib/api/errors"
 import {
   deletePropertyDocument,
   deletePropertyPhoto,
+  fetchPropertyDocumentUrl,
   propertyKeys,
   uploadPropertyPhoto,
 } from "@/lib/api/properties"
@@ -39,7 +41,20 @@ export function PropertyDocumentsTab({
   const queryClient = useQueryClient()
   const documents = usePropertyDocuments(propertyId)
   const [uploadOpen, setUploadOpen] = useState(false)
+  const [openingId, setOpeningId] = useState<string | null>(null)
   const photoInput = useRef<HTMLInputElement>(null)
+
+  async function viewDocument(documentId: string) {
+    setOpeningId(documentId)
+    try {
+      const { url } = await fetchPropertyDocumentUrl(documentId)
+      window.open(url, "_blank", "noopener,noreferrer")
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Couldn't open the document."))
+    } finally {
+      setOpeningId(null)
+    }
+  }
 
   const removeDocument = useMutation({
     mutationFn: (id: string) => deletePropertyDocument(id),
@@ -128,18 +143,7 @@ export function PropertyDocumentsTab({
                 {(documents.data ?? []).map((document) => (
                   <tr key={document.document_id}>
                     <td className="px-5 py-3 font-medium">
-                      {document.public_url ? (
-                        <a
-                          href={document.public_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="hover:underline"
-                        >
-                          {document.name}
-                        </a>
-                      ) : (
-                        document.name
-                      )}
+                      {document.name}
                       {document.file_size_bytes ? (
                         <p className="text-xs font-normal text-muted-foreground">
                           {formatFileSize(document.file_size_bytes)}
@@ -153,24 +157,40 @@ export function PropertyDocumentsTab({
                       {formatDate(document.uploaded_at)}
                     </td>
                     <td className="px-5 py-3 text-right">
-                      {canManage ? (
+                      <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="rounded-full text-destructive"
-                          disabled={removeDocument.isPending}
-                          onClick={() =>
-                            removeDocument.mutate(document.document_id)
-                          }
+                          className="rounded-full"
+                          disabled={openingId === document.document_id}
+                          onClick={() => viewDocument(document.document_id)}
                         >
-                          {removeDocument.isPending ? (
+                          {openingId === document.document_id ? (
                             <Loader2Icon className="animate-spin" />
                           ) : (
-                            <Trash2Icon />
+                            <ExternalLinkIcon />
                           )}
-                          Delete
+                          View
                         </Button>
-                      ) : null}
+                        {canManage ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-full text-destructive"
+                            disabled={removeDocument.isPending}
+                            onClick={() =>
+                              removeDocument.mutate(document.document_id)
+                            }
+                          >
+                            {removeDocument.isPending ? (
+                              <Loader2Icon className="animate-spin" />
+                            ) : (
+                              <Trash2Icon />
+                            )}
+                            Delete
+                          </Button>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}

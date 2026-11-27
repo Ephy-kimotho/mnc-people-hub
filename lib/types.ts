@@ -584,7 +584,6 @@ export type PropertyDocument = {
   property_id: string
   name: string
   category: string
-  public_url: string | null
   mime_type: string | null
   file_size_bytes: number | null
   uploaded_at: string
