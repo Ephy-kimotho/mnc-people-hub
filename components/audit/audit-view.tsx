@@ -29,7 +29,12 @@ function AuditValues({ entry }: { entry: AuditEntry }) {
   const after = entry.new_value ?? {}
   const keys = Array.from(
     new Set([...Object.keys(before), ...Object.keys(after)])
-  )
+  ).filter((key) => {
+    if (key in before && key in after) {
+      return JSON.stringify(before[key]) !== JSON.stringify(after[key])
+    }
+    return true
+  })
   if (keys.length === 0) return null
 
   return (
