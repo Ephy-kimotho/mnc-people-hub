@@ -134,8 +134,10 @@ export function PropertyDocumentsTab({
               <thead>
                 <tr className="border-b bg-muted/30 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                   <th className="px-5 py-3">Document name</th>
-                  <th className="px-5 py-3">Category</th>
-                  <th className="px-5 py-3">Date uploaded</th>
+                  <th className="hidden px-5 py-3 sm:table-cell">Category</th>
+                  <th className="hidden px-5 py-3 sm:table-cell">
+                    Date uploaded
+                  </th>
                   <th className="px-5 py-3 text-right">Action</th>
                 </tr>
               </thead>
@@ -149,11 +151,14 @@ export function PropertyDocumentsTab({
                           {formatFileSize(document.file_size_bytes)}
                         </p>
                       ) : null}
+                      <p className="mt-0.5 text-xs font-normal text-muted-foreground sm:hidden">
+                        {document.category} · {formatDate(document.uploaded_at)}
+                      </p>
                     </td>
-                    <td className="px-5 py-3 text-muted-foreground">
+                    <td className="hidden px-5 py-3 text-muted-foreground sm:table-cell">
                       {document.category}
                     </td>
-                    <td className="px-5 py-3 text-muted-foreground">
+                    <td className="hidden px-5 py-3 text-muted-foreground sm:table-cell">
                       {formatDate(document.uploaded_at)}
                     </td>
                     <td className="px-5 py-3 text-right">
@@ -161,7 +166,7 @@ export function PropertyDocumentsTab({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="rounded-full"
+                          className="rounded-full px-2 sm:px-3"
                           disabled={openingId === document.document_id}
                           onClick={() => viewDocument(document.document_id)}
                         >
@@ -170,13 +175,13 @@ export function PropertyDocumentsTab({
                           ) : (
                             <ExternalLinkIcon />
                           )}
-                          View
+                          <span className="hidden sm:inline">View</span>
                         </Button>
                         {canManage ? (
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="rounded-full text-destructive"
+                            className="rounded-full px-2 text-destructive sm:px-3"
                             disabled={removeDocument.isPending}
                             onClick={() =>
                               removeDocument.mutate(document.document_id)
@@ -187,7 +192,7 @@ export function PropertyDocumentsTab({
                             ) : (
                               <Trash2Icon />
                             )}
-                            Delete
+                            <span className="hidden sm:inline">Delete</span>
                           </Button>
                         ) : null}
                       </div>

@@ -18,6 +18,7 @@ import { useState } from "react"
 import toast from "react-hot-toast"
 
 import { PageHeader } from "@/components/dashboard/page-header"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -156,7 +157,39 @@ export function LeaveCalendarView() {
           </Button>
         </div>
       ) : (
-        <Card className="gap-0 overflow-hidden rounded-2xl p-0">
+        <>
+          <div className="grid gap-3 sm:hidden">
+            {monthEvents.map((event) => (
+              <Card
+                key={event.request_id}
+                className="gap-2 rounded-2xl p-4 shadow-xs"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-medium">{event.staff_name}</p>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "shrink-0 rounded-full capitalize",
+                      leaveTone[event.leave_type.toLowerCase()] ??
+                        "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {event.leave_type}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {event.staff_role}
+                </p>
+                <p className="text-sm">
+                  {formatDateRange(event.start_date, event.end_date)} ·{" "}
+                  {event.days} day(s)
+                </p>
+              </Card>
+            ))}
+          </div>
+
+          <div className="hidden sm:block">
+            <Card className="gap-0 overflow-hidden rounded-2xl p-0">
           <div className="overflow-x-auto">
             <div className="min-w-[760px]">
               <div className="grid grid-cols-7 border-b bg-muted/40">
@@ -210,7 +243,9 @@ export function LeaveCalendarView() {
               </div>
             </div>
           </div>
-        </Card>
+            </Card>
+          </div>
+        </>
       )}
 
       {!query.isPending && !query.isError && monthEvents.length === 0 ? (

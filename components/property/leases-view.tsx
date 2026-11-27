@@ -95,102 +95,119 @@ export function LeasesView() {
           No leases yet. Draft the first one.
         </div>
       ) : (
-        <Card className="gap-0 overflow-hidden rounded-2xl p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/30 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                  <th className="px-5 py-3">Tenant</th>
-                  <th className="px-5 py-3">Location</th>
-                  <th className="px-5 py-3">Term</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3 text-right">Rent</th>
-                  <th className="px-5 py-3 text-right">Deposit</th>
-                  <th className="px-5 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {(query.data ?? []).map((lease) => (
-                  <tr key={lease.lease_id} className="align-middle">
-                    <td className="px-5 py-4 font-medium">
-                      {lease.tenant_full_name ||
-                        lease.tenant_company_name ||
-                        "Tenant"}
-                    </td>
-                    <td className="px-5 py-4">
-                      <p>{lease.property_alias}</p>
-                      <p className="text-muted-foreground">{lease.unit_label}</p>
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className="inline-flex items-center gap-2">
-                        <RefreshCwIcon className="size-4 text-muted-foreground" />
-                        {lease.end_date ? formatDate(lease.end_date) : "Ongoing"}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <Badge
-                        variant="outline"
-                        className={`rounded-full ${statusTone[lease.status] ?? ""}`}
-                      >
-                        {lease.status}
-                      </Badge>
-                    </td>
-                    <td className="px-5 py-4 text-right">
-                      <p className="font-medium">
-                        {formatCurrency(lease.monthly_rent_kes ?? 0)}
-                      </p>
-                      {lease.monthly_rent_usd ? (
-                        <p className="text-xs text-muted-foreground">
-                          {formatCurrency(lease.monthly_rent_usd, "USD")}
-                        </p>
-                      ) : null}
-                    </td>
-                    <td className="px-5 py-4 text-right">
-                      <p className="font-medium">
-                        {formatCurrency(lease.deposit_kes ?? 0)}
-                      </p>
-                      {lease.deposit_usd ? (
-                        <p className="text-xs text-muted-foreground">
-                          {formatCurrency(lease.deposit_usd, "USD")}
-                        </p>
-                      ) : null}
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center justify-end gap-1">
-                        {canManage ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="rounded-full"
-                            onClick={() => open(lease)}
-                          >
-                            <PencilIcon />
-                            Edit
-                          </Button>
-                        ) : null}
-                        {lease.property_id ? (
-                          <Button
-                            asChild
-                            variant="ghost"
-                            size="icon-sm"
-                            className="rounded-full"
-                          >
-                            <Link
-                              href={`/property/properties/${lease.property_id}`}
-                              aria-label="Open property"
-                            >
-                              <ArrowUpRightIcon />
-                            </Link>
-                          </Button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <>
+          <div className="grid gap-3 sm:hidden">
+            {(query.data ?? []).map((lease) => (
+              <LeaseMobileCard
+                key={lease.lease_id}
+                lease={lease}
+                canManage={canManage}
+                onEdit={() => open(lease)}
+              />
+            ))}
           </div>
-        </Card>
+
+          <Card className="hidden gap-0 overflow-hidden rounded-2xl p-0 sm:flex">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/30 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    <th className="px-5 py-3">Tenant</th>
+                    <th className="px-5 py-3">Location</th>
+                    <th className="px-5 py-3">Term</th>
+                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3 text-right">Rent</th>
+                    <th className="px-5 py-3 text-right">Deposit</th>
+                    <th className="px-5 py-3" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {(query.data ?? []).map((lease) => (
+                    <tr key={lease.lease_id} className="align-middle">
+                      <td className="px-5 py-4 font-medium">
+                        {lease.tenant_full_name ||
+                          lease.tenant_company_name ||
+                          "Tenant"}
+                      </td>
+                      <td className="px-5 py-4">
+                        <p>{lease.property_alias}</p>
+                        <p className="text-muted-foreground">
+                          {lease.unit_label}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="inline-flex items-center gap-2">
+                          <RefreshCwIcon className="size-4 text-muted-foreground" />
+                          {lease.end_date
+                            ? formatDate(lease.end_date)
+                            : "Ongoing"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <Badge
+                          variant="outline"
+                          className={`rounded-full ${statusTone[lease.status] ?? ""}`}
+                        >
+                          {lease.status}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <p className="font-medium">
+                          {formatCurrency(lease.monthly_rent_kes ?? 0)}
+                        </p>
+                        {lease.monthly_rent_usd ? (
+                          <p className="text-xs text-muted-foreground">
+                            {formatCurrency(lease.monthly_rent_usd, "USD")}
+                          </p>
+                        ) : null}
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <p className="font-medium">
+                          {formatCurrency(lease.deposit_kes ?? 0)}
+                        </p>
+                        {lease.deposit_usd ? (
+                          <p className="text-xs text-muted-foreground">
+                            {formatCurrency(lease.deposit_usd, "USD")}
+                          </p>
+                        ) : null}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-end gap-1">
+                          {canManage ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="rounded-full"
+                              onClick={() => open(lease)}
+                            >
+                              <PencilIcon />
+                              Edit
+                            </Button>
+                          ) : null}
+                          {lease.property_id ? (
+                            <Button
+                              asChild
+                              variant="ghost"
+                              size="icon-sm"
+                              className="rounded-full"
+                            >
+                              <Link
+                                href={`/property/properties/${lease.property_id}`}
+                                aria-label="Open property"
+                              >
+                                <ArrowUpRightIcon />
+                              </Link>
+                            </Button>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </>
       )}
 
       <LeaseDialog
@@ -199,5 +216,100 @@ export function LeasesView() {
         lease={selected}
       />
     </div>
+  )
+}
+
+function LeaseMobileCard({
+  lease,
+  canManage,
+  onEdit,
+}: {
+  lease: Lease
+  canManage: boolean
+  onEdit: () => void
+}) {
+  return (
+    <Card className="gap-3 rounded-2xl p-4 shadow-xs">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate font-medium">
+            {lease.tenant_full_name || lease.tenant_company_name || "Tenant"}
+          </p>
+          <p className="truncate text-sm text-muted-foreground">
+            {lease.property_alias} · {lease.unit_label}
+          </p>
+        </div>
+        <Badge
+          variant="outline"
+          className={`shrink-0 rounded-full ${statusTone[lease.status] ?? ""}`}
+        >
+          {lease.status}
+        </Badge>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <p className="text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase">
+            Rent
+          </p>
+          <p className="mt-0.5 font-medium">
+            {formatCurrency(lease.monthly_rent_kes ?? 0)}
+          </p>
+          {lease.monthly_rent_usd ? (
+            <p className="text-xs text-muted-foreground">
+              {formatCurrency(lease.monthly_rent_usd, "USD")}
+            </p>
+          ) : null}
+        </div>
+        <div>
+          <p className="text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase">
+            Deposit
+          </p>
+          <p className="mt-0.5 font-medium">
+            {formatCurrency(lease.deposit_kes ?? 0)}
+          </p>
+          {lease.deposit_usd ? (
+            <p className="text-xs text-muted-foreground">
+              {formatCurrency(lease.deposit_usd, "USD")}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between border-t pt-2">
+        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+          <RefreshCwIcon className="size-3.5" />
+          {lease.end_date ? formatDate(lease.end_date) : "Ongoing"}
+        </span>
+        <div className="flex items-center gap-1">
+          {canManage ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full"
+              onClick={onEdit}
+            >
+              <PencilIcon />
+              Edit
+            </Button>
+          ) : null}
+          {lease.property_id ? (
+            <Button
+              asChild
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-full"
+            >
+              <Link
+                href={`/property/properties/${lease.property_id}`}
+                aria-label="Open property"
+              >
+                <ArrowUpRightIcon />
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    </Card>
   )
 }

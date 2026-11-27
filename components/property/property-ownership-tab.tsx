@@ -101,7 +101,9 @@ export function PropertyOwnershipTab({
               <thead>
                 <tr className="border-b bg-muted/30 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                   <th className="px-5 py-3">Owner name</th>
-                  <th className="px-5 py-3">Entity type</th>
+                  <th className="hidden px-5 py-3 sm:table-cell">
+                    Entity type
+                  </th>
                   <th className="px-5 py-3 text-right">Share</th>
                   <th className="px-5 py-3" />
                 </tr>
@@ -109,8 +111,13 @@ export function PropertyOwnershipTab({
               <tbody className="divide-y">
                 {(owners.data ?? []).map((owner) => (
                   <tr key={owner.owner_id}>
-                    <td className="px-5 py-3 font-medium">{owner.name}</td>
-                    <td className="px-5 py-3 text-muted-foreground">
+                    <td className="px-5 py-3 font-medium">
+                      {owner.name}
+                      <p className="text-xs font-normal text-muted-foreground sm:hidden">
+                        {owner.entity_type}
+                      </p>
+                    </td>
+                    <td className="hidden px-5 py-3 text-muted-foreground sm:table-cell">
                       {owner.entity_type}
                     </td>
                     <td className="px-5 py-3 text-right font-medium">
@@ -121,7 +128,7 @@ export function PropertyOwnershipTab({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="rounded-full text-destructive"
+                          className="rounded-full px-2 text-destructive sm:px-3"
                           disabled={removeOwner.isPending}
                           onClick={() => removeOwner.mutate(owner.owner_id)}
                         >
@@ -130,7 +137,7 @@ export function PropertyOwnershipTab({
                           ) : (
                             <Trash2Icon />
                           )}
-                          Remove
+                          <span className="hidden sm:inline">Remove</span>
                         </Button>
                       ) : null}
                     </td>

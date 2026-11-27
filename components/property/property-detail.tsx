@@ -175,7 +175,7 @@ export function PropertyDetail({ propertyId }: { propertyId: string }) {
         description={[data.location, data.county].filter(Boolean).join(" · ")}
         action={
           canManage && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 variant="outline"
                 className="h-10 rounded-full px-5"

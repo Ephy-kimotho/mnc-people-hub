@@ -98,7 +98,10 @@ export function PropertyServiceChargesTab({
                         href={`/property/tenants/${tenant.tenant_id}`}
                         className="text-sm italic text-muted-foreground hover:text-foreground hover:underline"
                       >
-                        Edit in tenant profile
+                        <span className="hidden sm:inline">
+                          Edit in tenant profile
+                        </span>
+                        <span className="sm:hidden">Edit</span>
                       </Link>
                     </td>
                   </tr>

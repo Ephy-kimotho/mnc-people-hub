@@ -319,7 +319,7 @@ export function TenantDetail({ tenantId }: { tenantId: string }) {
                     <ShieldCheckIcon className="size-4" />
                     Protected statutory identity
                   </p>
-                  <div className="mt-3 grid grid-cols-3 gap-3">
+                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
                     <Field
                       label="ID type"
                       value={tenant.id_type}

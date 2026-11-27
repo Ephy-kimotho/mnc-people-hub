@@ -144,102 +144,190 @@ export function RemindersView() {
           ) : rentRows.length === 0 ? (
             <EmptyBlock message="No active leases to collect for this period." />
           ) : (
-            <Card className="gap-0 overflow-hidden rounded-2xl p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/30 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                      <th className="px-5 py-3">Tenant</th>
-                      <th className="px-5 py-3">Property / Unit</th>
-                      <th className="px-5 py-3 text-right">Expected</th>
-                      <th className="px-5 py-3 text-right">Paid</th>
-                      <th className="px-5 py-3 text-right">Balance</th>
-                      <th className="px-5 py-3">Status</th>
-                      <th className="px-5 py-3" />
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {rentRows.map((row) => {
-                      const balance = Math.max(0, row.outstanding_kes ?? 0)
-                      const expected = row.expected_kes ?? 0
-                      const unconfigured = expected <= 0
-                      const status = unconfigured
-                        ? "Unconfigured"
-                        : balance <= 0
-                          ? "Paid"
-                          : (row.paid_kes ?? 0) > 0
-                            ? "Partial"
-                            : "Unpaid"
-                      return (
-                        <tr key={row.lease_id}>
-                          <td className="px-5 py-3 font-medium">
-                            <span className="inline-flex items-center gap-2">
-                              <UserIcon className="size-3.5 text-muted-foreground" />
-                              {row.tenant_full_name ||
-                                row.tenant_company_name ||
-                                "Tenant"}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3 text-muted-foreground">
+            <>
+              <div className="grid gap-3 sm:hidden">
+                {rentRows.map((row) => {
+                  const status = rentStatus(row)
+                  const balance = Math.max(0, row.outstanding_kes ?? 0)
+                  const unconfigured = (row.expected_kes ?? 0) <= 0
+                  return (
+                    <Card
+                      key={row.lease_id}
+                      className="gap-3 rounded-2xl p-4 shadow-xs"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">
+                            {row.tenant_full_name ||
+                              row.tenant_company_name ||
+                              "Tenant"}
+                          </p>
+                          <p className="truncate text-sm text-muted-foreground">
                             {row.property_alias} • {row.unit_label}
-                          </td>
-                          <td className="px-5 py-3 text-right">
-                            {formatCurrency(expected)}
-                          </td>
-                          <td className="px-5 py-3 text-right">
+                          </p>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className={
+                            status === "Unconfigured"
+                              ? "shrink-0 rounded-full"
+                              : status === "Paid"
+                                ? "shrink-0 rounded-full border-emerald-700/30 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
+                                : "shrink-0 rounded-full border-amber-600/30 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+                          }
+                        >
+                          {status}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-sm">
+                        <div>
+                          <p className="text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase">
+                            Expected
+                          </p>
+                          <p className="mt-0.5">
+                            {formatCurrency(row.expected_kes ?? 0)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase">
+                            Paid
+                          </p>
+                          <p className="mt-0.5">
                             {formatCurrency(row.paid_kes ?? 0)}
-                          </td>
-                          <td
-                            className={`px-5 py-3 text-right font-semibold ${balance > 0 ? "text-amber-600" : ""}`}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase">
+                            Balance
+                          </p>
+                          <p
+                            className={`mt-0.5 font-semibold ${balance > 0 ? "text-amber-600" : ""}`}
                           >
                             {formatCurrency(balance)}
-                          </td>
-                          <td className="px-5 py-3">
-                            <Badge
-                              variant="outline"
-                              className={
-                                status === "Unconfigured"
-                                  ? "rounded-full"
-                                  : status === "Paid"
-                                    ? "rounded-full border-emerald-700/30 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
-                                    : "rounded-full border-amber-600/30 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
-                              }
-                            >
-                              {status}
-                            </Badge>
-                          </td>
-                          <td className="px-5 py-3 text-right">
-                            {unconfigured ? (
-                              <button
-                                type="button"
-                                className="text-sm italic text-muted-foreground hover:text-foreground hover:underline"
-                                onClick={() => {
-                                  const lease = leases.data?.find(
-                                    (item) => item.lease_id === row.lease_id
-                                  )
-                                  if (lease) setEditingLease(lease)
-                                }}
-                              >
-                                Configure rent
-                              </button>
-                            ) : canManage ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="rounded-full"
-                                onClick={() => setPaying(row)}
-                              >
-                                Record
-                              </Button>
-                            ) : null}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end border-t pt-2">
+                        {unconfigured ? (
+                          <button
+                            type="button"
+                            className="text-sm italic text-muted-foreground hover:text-foreground hover:underline"
+                            onClick={() => {
+                              const lease = leases.data?.find(
+                                (item) => item.lease_id === row.lease_id
+                              )
+                              if (lease) setEditingLease(lease)
+                            }}
+                          >
+                            Configure rent
+                          </button>
+                        ) : canManage ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-full"
+                            onClick={() => setPaying(row)}
+                          >
+                            Record payment
+                          </Button>
+                        ) : null}
+                      </div>
+                    </Card>
+                  )
+                })}
               </div>
-            </Card>
+
+              <Card className="hidden gap-0 overflow-hidden rounded-2xl p-0 sm:flex">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/30 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        <th className="px-5 py-3">Tenant</th>
+                        <th className="px-5 py-3">Property / Unit</th>
+                        <th className="px-5 py-3 text-right">Expected</th>
+                        <th className="px-5 py-3 text-right">Paid</th>
+                        <th className="px-5 py-3 text-right">Balance</th>
+                        <th className="px-5 py-3">Status</th>
+                        <th className="px-5 py-3" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {rentRows.map((row) => {
+                        const balance = Math.max(0, row.outstanding_kes ?? 0)
+                        const expected = row.expected_kes ?? 0
+                        const unconfigured = expected <= 0
+                        const status = rentStatus(row)
+                        return (
+                          <tr key={row.lease_id}>
+                            <td className="px-5 py-3 font-medium">
+                              <span className="inline-flex items-center gap-2">
+                                <UserIcon className="size-3.5 text-muted-foreground" />
+                                {row.tenant_full_name ||
+                                  row.tenant_company_name ||
+                                  "Tenant"}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3 text-muted-foreground">
+                              {row.property_alias} • {row.unit_label}
+                            </td>
+                            <td className="px-5 py-3 text-right">
+                              {formatCurrency(expected)}
+                            </td>
+                            <td className="px-5 py-3 text-right">
+                              {formatCurrency(row.paid_kes ?? 0)}
+                            </td>
+                            <td
+                              className={`px-5 py-3 text-right font-semibold ${balance > 0 ? "text-amber-600" : ""}`}
+                            >
+                              {formatCurrency(balance)}
+                            </td>
+                            <td className="px-5 py-3">
+                              <Badge
+                                variant="outline"
+                                className={
+                                  status === "Unconfigured"
+                                    ? "rounded-full"
+                                    : status === "Paid"
+                                      ? "rounded-full border-emerald-700/30 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
+                                      : "rounded-full border-amber-600/30 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+                                }
+                              >
+                                {status}
+                              </Badge>
+                            </td>
+                            <td className="px-5 py-3 text-right">
+                              {unconfigured ? (
+                                <button
+                                  type="button"
+                                  className="text-sm italic text-muted-foreground hover:text-foreground hover:underline"
+                                  onClick={() => {
+                                    const lease = leases.data?.find(
+                                      (item) => item.lease_id === row.lease_id
+                                    )
+                                    if (lease) setEditingLease(lease)
+                                  }}
+                                >
+                                  Configure rent
+                                </button>
+                              ) : canManage ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="rounded-full"
+                                  onClick={() => setPaying(row)}
+                                >
+                                  Record
+                                </Button>
+                              ) : null}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </>
           )}
         </TabsContent>
 
@@ -257,27 +345,35 @@ export function RemindersView() {
           ) : depositRows.length === 0 ? (
             <EmptyBlock message="Every active lease has reached its deposit target." />
           ) : (
-            <Card className="gap-0 overflow-hidden rounded-2xl p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/30 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                      <th className="px-5 py-3">Tenant</th>
-                      <th className="px-5 py-3">Property / Unit</th>
-                      <th className="px-5 py-3 text-right">Held</th>
-                      <th className="px-5 py-3 text-right">Required</th>
-                      <th className="px-5 py-3 text-right">Shortfall</th>
-                      <th className="px-5 py-3" />
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {depositRows.map((row) => (
-                      <DepositRow key={row.lease_id} row={row} />
-                    ))}
-                  </tbody>
-                </table>
+            <>
+              <div className="grid gap-3 sm:hidden">
+                {depositRows.map((row) => (
+                  <DepositMobileCard key={row.lease_id} row={row} />
+                ))}
               </div>
-            </Card>
+
+              <Card className="hidden gap-0 overflow-hidden rounded-2xl p-0 sm:flex">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/30 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        <th className="px-5 py-3">Tenant</th>
+                        <th className="px-5 py-3">Property / Unit</th>
+                        <th className="px-5 py-3 text-right">Held</th>
+                        <th className="px-5 py-3 text-right">Required</th>
+                        <th className="px-5 py-3 text-right">Shortfall</th>
+                        <th className="px-5 py-3" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {depositRows.map((row) => (
+                        <DepositRow key={row.lease_id} row={row} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </>
           )}
         </TabsContent>
       </Tabs>
@@ -294,6 +390,62 @@ export function RemindersView() {
         lease={editingLease}
       />
     </div>
+  )
+}
+
+function rentStatus(row: RentCollection) {
+  const balance = Math.max(0, row.outstanding_kes ?? 0)
+  if ((row.expected_kes ?? 0) <= 0) return "Unconfigured"
+  if (balance <= 0) return "Paid"
+  return (row.paid_kes ?? 0) > 0 ? "Partial" : "Unpaid"
+}
+
+function DepositMobileCard({ row }: { row: DepositTopup }) {
+  const usd = row.shortfall_usd > 0
+  const currency = usd ? "USD" : "KES"
+  const held = usd ? row.deposit_usd : row.deposit_kes
+  const required = usd ? row.required_usd : row.required_kes
+  const shortfall = usd ? row.shortfall_usd : row.shortfall_kes
+
+  return (
+    <Card className="gap-3 rounded-2xl p-4 shadow-xs">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate font-medium">{row.tenant_name || "Tenant"}</p>
+          <p className="truncate text-sm text-muted-foreground">
+            {row.property_alias} • {row.unit_label}
+          </p>
+        </div>
+        <Link
+          href={`/property/tenants/${row.tenant_id}`}
+          className="shrink-0 text-sm italic text-muted-foreground hover:text-foreground hover:underline"
+        >
+          View
+        </Link>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-sm">
+        <div>
+          <p className="text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase">
+            Held
+          </p>
+          <p className="mt-0.5">{formatCurrency(held ?? 0, currency)}</p>
+        </div>
+        <div>
+          <p className="text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase">
+            Required
+          </p>
+          <p className="mt-0.5">{formatCurrency(required ?? 0, currency)}</p>
+        </div>
+        <div>
+          <p className="text-[0.65rem] font-semibold tracking-wide text-muted-foreground uppercase">
+            Shortfall
+          </p>
+          <p className="mt-0.5 font-semibold text-amber-600">
+            {formatCurrency(shortfall ?? 0, currency)}
+          </p>
+        </div>
+      </div>
+    </Card>
   )
 }
 
