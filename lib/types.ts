@@ -701,6 +701,8 @@ export type AuditEntry = {
   entity: string | null
   entity_id: string | null
   description: string | null
+  old_value?: Record<string, unknown> | null
+  new_value?: Record<string, unknown> | null
 }
 
 // ── Leave policies, calendar, notifications, auth audit ───────────

@@ -1,6 +1,7 @@
 "use client"
 
-import { ScrollTextIcon } from "lucide-react"
+import { ScrollTextIcon, ShieldCheckIcon } from "lucide-react"
+import Link from "next/link"
 import { useState } from "react"
 
 import { PageHeader } from "@/components/dashboard/page-header"
@@ -10,8 +11,55 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useAudit } from "@/hooks/use-mnc"
 import { getErrorMessage } from "@/lib/api/errors"
 import { formatDateTime } from "@/lib/format"
+import type { AuditEntry } from "@/lib/types"
 
 const PAGE_SIZE = 50
+
+function formatValue(value: unknown) {
+  if (value === null || value === undefined) return "—"
+  if (typeof value === "string") return value
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value)
+  }
+  return JSON.stringify(value)
+}
+
+function AuditValues({ entry }: { entry: AuditEntry }) {
+  const before = entry.old_value ?? {}
+  const after = entry.new_value ?? {}
+  const keys = Array.from(
+    new Set([...Object.keys(before), ...Object.keys(after)])
+  )
+  if (keys.length === 0) return null
+
+  return (
+    <details className="mt-1.5 text-xs text-muted-foreground">
+      <summary className="w-fit cursor-pointer select-none hover:text-foreground">
+        Changed values
+      </summary>
+      <dl className="mt-2 grid gap-1">
+        {keys.map((key) => (
+          <div key={key} className="flex flex-wrap gap-x-2">
+            <dt className="font-medium">{key.replaceAll("_", " ")}</dt>
+            <dd>
+              {key in before && key in after ? (
+                <>
+                  <span className="line-through opacity-70">
+                    {formatValue(before[key])}
+                  </span>
+                  <span aria-hidden> → </span>
+                  <span>{formatValue(after[key])}</span>
+                </>
+              ) : (
+                formatValue(key in after ? after[key] : before[key])
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </details>
+  )
+}
 
 export function AuditView() {
   const [offset, setOffset] = useState(0)
@@ -24,6 +72,18 @@ export function AuditView() {
         eyebrow="Accountability"
         title="Audit log"
         description="Who changed what in MNC People."
+        action={
+          <Button
+            asChild
+            variant="outline"
+            className="h-10 rounded-full px-4"
+          >
+            <Link href="/audit/auth">
+              <ShieldCheckIcon />
+              Auth audit
+            </Link>
+          </Button>
+        }
       />
 
       {query.isPending ? (
@@ -58,9 +118,12 @@ export function AuditView() {
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {entry.user_name ?? "System"}
-                    {entry.user_role ? ` (${entry.user_role})` : ""}
+                    {entry.user_role && entry.user_role !== entry.user_name
+                      ? ` (${entry.user_role})`
+                      : ""}
                     {entry.description ? ` — ${entry.description}` : ""}
                   </p>
+                  <AuditValues entry={entry} />
                 </li>
               ))}
             </ul>
