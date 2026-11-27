@@ -443,10 +443,19 @@ export async function deleteLease(leaseId: string) {
 export async function uploadLeaseDocument(leaseId: string, file: File) {
   const body = new FormData()
   body.append("file", file)
-  const response = await axiosInstance.post<{ document_url: string }>(
-    `/property/leases/${leaseId}/document`,
-    body
-  )
+  const response = await axiosInstance.post<{
+    filename: string
+    uploaded: boolean
+  }>(`/property/leases/${leaseId}/document`, body)
+  return response.data
+}
+
+export async function fetchLeaseDocumentUrl(leaseId: string) {
+  const response = await axiosInstance.get<{
+    url: string
+    expires_in: number | null
+    filename: string | null
+  }>(`/property/leases/${leaseId}/document`)
   return response.data
 }
 

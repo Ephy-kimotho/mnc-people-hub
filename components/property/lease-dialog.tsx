@@ -2,8 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Loader2Icon } from "lucide-react"
-import { useState } from "react"
+import { Loader2Icon, PaperclipIcon, UploadCloudIcon } from "lucide-react"
+import { useRef, useState } from "react"
 import toast from "react-hot-toast"
 import { Controller, useForm } from "react-hook-form"
 import type { z } from "zod"
@@ -24,8 +24,11 @@ import { useProperties, useTenants, useUnits } from "@/hooks/use-properties"
 import { getErrorMessage } from "@/lib/api/errors"
 import {
   createLease,
+  deleteLeaseDocument,
+  fetchLeaseDocumentUrl,
   propertyKeys,
   updateLease,
+  uploadLeaseDocument,
 } from "@/lib/api/properties"
 import { leaseSchema, type LeaseInput } from "@/lib/schemas/property"
 import type { Lease } from "@/lib/types"
@@ -90,6 +93,62 @@ function LeaseForm({ lease, onDone }: { lease?: Lease; onDone: () => void }) {
   })
   const propertyId = form.watch("property_id")
   const units = useUnits(propertyId)
+
+  const [docName, setDocName] = useState<string | null>(
+    lease?.has_document ? "Lease agreement" : null
+  )
+  const docInput = useRef<HTMLInputElement>(null)
+
+  const uploadDoc = useMutation({
+    mutationFn: (file: File) => uploadLeaseDocument(lease!.lease_id, file),
+    onSuccess: (_data, file) => {
+      void queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      setDocName(file.name)
+      toast.success("Lease agreement uploaded")
+    },
+    onError: (error) =>
+      toast.error(
+        getErrorMessage(error, "Couldn't upload the lease agreement.")
+      ),
+  })
+
+  const removeDoc = useMutation({
+    mutationFn: () => deleteLeaseDocument(lease!.lease_id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      setDocName(null)
+      toast.success("Lease agreement removed")
+    },
+    onError: (error) =>
+      toast.error(
+        getErrorMessage(error, "Couldn't remove the lease agreement.")
+      ),
+  })
+
+  async function viewDoc() {
+    if (!lease) return
+    try {
+      const { url } = await fetchLeaseDocumentUrl(lease.lease_id)
+      window.open(url, "_blank", "noopener,noreferrer")
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Couldn't open the lease agreement."))
+    }
+  }
+
+  function onPickDoc(event: React.ChangeEvent<HTMLInputElement>) {
+    const picked = event.target.files?.[0]
+    if (!picked) return
+    if (!["application/pdf", "image/jpeg", "image/png"].includes(picked.type)) {
+      toast.error("Choose a PDF, JPEG or PNG file.")
+      return
+    }
+    if (picked.size > 15 * 1024 * 1024) {
+      toast.error("The file must be 15 MB or smaller.")
+      return
+    }
+    uploadDoc.mutate(picked)
+    event.target.value = ""
+  }
 
   const mutation = useMutation({
     mutationFn: (values: LeaseInput) =>
@@ -297,6 +356,70 @@ function LeaseForm({ lease, onDone }: { lease?: Lease; onDone: () => void }) {
             {...form.register("notes")}
           />
         </div>
+
+        {lease ? (
+          <div className="rounded-xl border px-4 py-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-sm font-medium">Lease agreement</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {docName ?? "No document attached"}
+                </p>
+              </div>
+              {docName ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 shrink-0 rounded-full px-3"
+                  onClick={viewDoc}
+                >
+                  <PaperclipIcon />
+                  View
+                </Button>
+              ) : null}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-full px-3"
+                disabled={uploadDoc.isPending}
+                onClick={() => docInput.current?.click()}
+              >
+                {uploadDoc.isPending ? (
+                  <Loader2Icon className="animate-spin" />
+                ) : (
+                  <UploadCloudIcon />
+                )}
+                {docName ? "Replace" : "Upload"}
+              </Button>
+              {docName ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 rounded-full px-3 text-destructive"
+                  disabled={removeDoc.isPending}
+                  onClick={() => removeDoc.mutate()}
+                >
+                  {removeDoc.isPending ? (
+                    <Loader2Icon className="animate-spin" />
+                  ) : null}
+                  Remove
+                </Button>
+              ) : null}
+            </div>
+            <input
+              ref={docInput}
+              type="file"
+              accept=".pdf,image/jpeg,image/png"
+              className="hidden"
+              onChange={onPickDoc}
+            />
+          </div>
+        ) : null}
       </fieldset>
 
       <DialogFooter className="border-t px-6 py-4">

@@ -2,6 +2,7 @@
 
 import {
   ArrowUpRightIcon,
+  PaperclipIcon,
   PencilIcon,
   PlusIcon,
   RefreshCwIcon,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
+import toast from "react-hot-toast"
 
 import { PageHeader } from "@/components/dashboard/page-header"
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { LeaseDialog } from "@/components/property/lease-dialog"
 import { useLeases } from "@/hooks/use-properties"
 import { getErrorMessage } from "@/lib/api/errors"
+import { fetchLeaseDocumentUrl } from "@/lib/api/properties"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { canManageProperty } from "@/lib/permissions"
 import type { Lease } from "@/lib/types"
@@ -44,6 +47,15 @@ export function LeasesView() {
   function open(lease?: Lease) {
     setSelected(lease)
     setDialog("form")
+  }
+
+  async function viewDocument(lease: Lease) {
+    try {
+      const { url } = await fetchLeaseDocumentUrl(lease.lease_id)
+      window.open(url, "_blank", "noopener,noreferrer")
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Couldn't open the lease agreement."))
+    }
   }
 
   return (
@@ -103,6 +115,7 @@ export function LeasesView() {
                 lease={lease}
                 canManage={canManage}
                 onEdit={() => open(lease)}
+                onViewDocument={() => viewDocument(lease)}
               />
             ))}
           </div>
@@ -173,6 +186,17 @@ export function LeasesView() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-end gap-1">
+                          {lease.has_document ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="rounded-full"
+                              onClick={() => viewDocument(lease)}
+                            >
+                              <PaperclipIcon />
+                              Document
+                            </Button>
+                          ) : null}
                           {canManage ? (
                             <Button
                               variant="ghost"
@@ -223,10 +247,12 @@ function LeaseMobileCard({
   lease,
   canManage,
   onEdit,
+  onViewDocument,
 }: {
   lease: Lease
   canManage: boolean
   onEdit: () => void
+  onViewDocument: () => void
 }) {
   return (
     <Card className="gap-3 rounded-2xl p-4 shadow-xs">
@@ -282,6 +308,17 @@ function LeaseMobileCard({
           {lease.end_date ? formatDate(lease.end_date) : "Ongoing"}
         </span>
         <div className="flex items-center gap-1">
+          {lease.has_document ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full"
+              onClick={onViewDocument}
+            >
+              <PaperclipIcon />
+              Document
+            </Button>
+          ) : null}
           {canManage ? (
             <Button
               variant="ghost"

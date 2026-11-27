@@ -393,8 +393,9 @@ export type Lease = {
   water_provider: string | null
   status: string
   notes: string | null
-  document_url: string | null
-  document_path: string | null
+  document_url?: string | null
+  document_path?: string | null
+  has_document?: boolean
   created_at: string
   property_alias?: string
   unit_label?: string
