@@ -136,7 +136,7 @@ function PropertyForm({
     >
       <fieldset
         disabled={mutation.isPending}
-        className="grid max-h-[70vh] gap-4 overflow-y-auto px-6 py-5"
+        className="grid max-h-[70vh] gap-4 overflow-x-hidden overflow-y-auto px-6 py-5"
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <Field

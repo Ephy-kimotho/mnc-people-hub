@@ -230,7 +230,7 @@ function TenantForm({
     <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
       <fieldset
         disabled={mutation.isPending}
-        className="grid max-h-[72vh] gap-5 overflow-y-auto px-6 py-5"
+        className="grid max-h-[72vh] gap-5 overflow-x-hidden overflow-y-auto px-6 py-5"
       >
         <Section title="Contact details">
           <div className="grid gap-2">
