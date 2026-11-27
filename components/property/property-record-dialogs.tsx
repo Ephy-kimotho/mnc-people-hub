@@ -33,7 +33,7 @@ const labelClass =
 const documentCategories = ["Title Deed", "Insurance", "Site Map", "Other"]
 const insuranceTypes = ["Building", "Fire", "Liability", "Contents", "Other"]
 const insuranceStatuses = ["Active", "Expired", "Cancelled"]
-const entityTypes = ["Individual", "Company", "Trust"]
+const entityTypes = ["Individual", "Company", "Trust", "Joint"]
 const contactRoles = [
   "Security / Caretaker",
   "Property Manager",

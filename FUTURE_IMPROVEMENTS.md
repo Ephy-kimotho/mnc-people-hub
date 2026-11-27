@@ -18,37 +18,59 @@ Internal portal for **People** (staff, leave) and **Property** (portfolio, tenan
 
 ## 1. Go-live blockers (P0)
 
-### 1.1 Replace demo data with real data
+### 1.1 Replace demo property data with the Replit portfolio
 
-The current dataset was seeded so the app could be reviewed. Demo rows are marked **“Demo seed record”** where applicable.
+**Done on 27 November 2026.** The property demo dataset was removed and the Replit PropertyHub dataset was imported directly through the API.
 
-| Entity | Demo count |
+| Imported from Replit | Count |
 | --- | ---: |
-| Properties | 9 |
-| Units | 42 |
-| Tenants | 39 |
-| Leases | 40 (39 active, 1 terminated) |
-| Staff | 8 |
-| Leave requests | 10 |
-| Insurance policies | 3 |
-| Property owners | 6 |
-| Property contacts | 5 |
-| Maintenance records | 4 |
-| Rent payments | 4 |
-| Compliance payments | 2 |
-| Tenant vehicles | 1 |
-| Lease agreements | 1 demo PDF |
-| Acknowledged alerts | 1 |
+| Properties | 20 |
+| Units | 38 |
+| Tenants | 36 |
+| Active leases | 36 |
+| Bank accounts | 35 |
+| Property owners | 20 |
+| Insurance policies | 8 |
+
+Notes on the import:
+
+- Duplicate Replit property names (`Marigu`, `Munyo`) were disambiguated with their title numbers.
+- Replit returned 40 leases, but four terminated QA leases referenced tenants that no longer exist in its API, so they were skipped.
+- The property demo accounts, contacts, insurance, maintenance, payments, rent rows, alerts and demo lease document were deleted.
+- The import is recorded in **Audit Log → Property data imported**.
+
+The **People** dataset (8 staff, 10 leave requests, staff auth accounts) has not been replaced because Replit contains no staff or leave data.
+
+**Acceptance:** property register totals match Replit; no demo property rows remain.
+
+### 1.1a Complete the imported property data (P0)
+
+The Replit export is structurally complete but has major missing values:
+
+| Gap | Count |
+| --- | ---: |
+| Active leases missing start date | 36 of 36 |
+| Active leases missing end date | 36 of 36 |
+| Active leases missing KES rent | 36 of 36 |
+| Active leases missing all rent (KES and USD) | 35 of 36 |
+| Active leases missing service charge | 36 of 36 |
+| Tenants missing phone, mobile and email | 36 of 36 |
+| Tenants missing ID number | 36 of 36 |
+| Bank accounts with masked-only numbers | 35 of 35 |
+| Property contacts / documents / tenant documents / vehicles | 0 imported |
+
+As a result, the dashboard shows **Ksh 0 + USD 2,500 monthly rent** and the lease register shows Ksh 0, even though Replit’s property cards show rent totals. The app derives rent from leases; Replit’s lease API does not expose those amounts.
 
 Tasks:
 
-- [ ] Export or archive the demo dataset for reference.
-- [ ] Load real properties, units, tenants, leases, staff, leave, bank accounts and policies.
-- [ ] Reconcile monthly rent, deposits, service charges and compliance figures against the source records.
-- [ ] Delete all demo records and the demo lease PDF.
-- [ ] Confirm no “Demo seed record” text remains.
+- [ ] Obtain the missing lease start/end dates and rent amounts from the source records and enter them on each lease.
+- [ ] Add service-charge amounts where they apply.
+- [ ] Replace masked bank account numbers with full numbers; verify routing.
+- [ ] Add tenant phone, email and ID details.
+- [ ] Add property contacts, documents, insurance attachments and tenant documents that Replit did not expose.
+- [ ] Reconcile the portfolio rent total against the source figures.
 
-**Acceptance:** register totals and dashboard figures match the real portfolio; no demo rows remain.
+**Acceptance:** lease register shows real rents and dates; dashboard totals match the source records.
 
 ### 1.2 Remove demo logins and rotate seeded passwords
 
@@ -214,6 +236,7 @@ Do not re-open these unless a regression is found:
 - **Lease document original filename** stored and displayed.
 - **15 MB server-side upload limit** on all upload endpoints, with 413 responses.
 - **Audit log** populated across Staff, Leave, Property and Workspace changes, including old/new values and stable ordering.
+- **Property demo replaced with the Replit portfolio** — 20 properties, 38 units, 36 tenants, 36 active leases, 35 bank accounts, 20 owners and 8 insurance policies.
 - Leave edit `Decimal - float` crash fixed.
 
 ---
@@ -222,7 +245,9 @@ Do not re-open these unless a regression is found:
 
 Use this as the final release gate:
 
-- [ ] Real data loaded; demo data and demo documents removed.
+- [x] Property demo replaced with the Replit import (27 Nov 2026).
+- [ ] Lease dates, rents, service charges, tenant contacts and bank account numbers completed.
+- [ ] People demo data replaced with the real HR source.
 - [ ] Demo accounts removed; admin/manager/demo passwords rotated.
 - [ ] R2 bucket private; signed document access re-tested.
 - [ ] Database backup restored successfully in staging.
