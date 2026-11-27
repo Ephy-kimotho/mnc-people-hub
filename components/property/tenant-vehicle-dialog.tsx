@@ -35,7 +35,7 @@ export function TenantVehicleDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md gap-0 p-0">
+      <DialogContent className="max-w-md gap-0 overflow-x-hidden p-0">
         <DialogHeader className="gap-1 border-b px-6 py-5">
           <DialogTitle className="text-lg font-semibold">
             Add vehicle
