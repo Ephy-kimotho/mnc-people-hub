@@ -201,9 +201,11 @@ export function BankingView() {
         ) : (
           <ul className="divide-y">
             {(rent.data ?? []).map((row) => {
+              const expected = row.expected_kes ?? 0
+              const unconfigured = expected <= 0
               const outstanding = Math.max(
                 0,
-                (row.expected_kes ?? 0) - (row.paid_kes ?? 0)
+                expected - (row.paid_kes ?? 0)
               )
               return (
                 <li
@@ -229,7 +231,9 @@ export function BankingView() {
                         of {formatCurrency(row.expected_kes ?? 0)}
                       </p>
                     </div>
-                    {outstanding > 0 ? (
+                    {unconfigured ? (
+                      <Badge variant="outline">Unconfigured</Badge>
+                    ) : outstanding > 0 ? (
                       <Badge variant="outline" className="text-warning">
                         {formatCurrency(outstanding)} due
                       </Badge>

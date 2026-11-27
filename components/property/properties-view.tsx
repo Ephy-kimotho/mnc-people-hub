@@ -308,7 +308,8 @@ function PropertyCard({
             </p>
             {missingCharges > 0 ? (
               <p className="text-xs text-amber-600">
-                {missingCharges} tenants without a configured charge
+                {missingCharges} {missingCharges === 1 ? "tenant" : "tenants"}{" "}
+                without a configured charge
               </p>
             ) : null}
           </div>
