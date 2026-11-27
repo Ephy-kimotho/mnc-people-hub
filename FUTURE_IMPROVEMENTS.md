@@ -37,6 +37,8 @@ Notes on the import:
 - Duplicate Replit property names (`Marigu`, `Munyo`) were disambiguated with their title numbers.
 - Replit returned 40 leases, but four terminated QA leases referenced tenants that no longer exist in its API, so they were skipped.
 - The property demo accounts, contacts, insurance, maintenance, payments, rent rows, alerts and demo lease document were deleted.
+- Property flags from Replit are preserved in each property’s internal notes.
+- Insurance premium types are preserved in policy notes.
 - The import is recorded in **Audit Log → Property data imported**.
 
 **Acceptance:** property register totals match Replit; no demo property rows remain.
@@ -52,21 +54,23 @@ Notes on the import:
 | Work locations | 2 |
 | Emergency contacts | 5 |
 | Leave-balance rows (2026) | 24 |
+| Staff documents | 20 |
+| Staff profile photos | 5 |
 
 Details:
 
 - Staff profiles include national ID, NSSF, SHA, KRA PIN, SACCO, life-cover benefits and beneficiary details where Replit had them.
 - Work locations are **5199 Gardens** (1 staff) and **Manga Gardens House No 9** (5 staff).
 - The sick-leave policy was aligned to Replit’s **14 days**.
+- Staff documents were copied into private R2 storage and are served through 900-second signed URLs.
 - Demo staff, leave requests, balances, notifications and demo logins were deleted. **Only the `admin` auth account remains.**
-- The import is recorded in **Audit Log → People data imported**.
+- The import is recorded in **Audit Log → People data imported** and **Staff documents imported**.
 
 Remaining gaps:
 
 - [ ] Create staff login accounts and set/reset passwords (imported staff currently have no auth accounts).
-- [ ] Add the missing national ID and next-of-kin details for Peter Kamau Kariuki.
-- [ ] Copy staff profile photos that Replit’s object path did not expose.
-- [ ] Add leave documents if any exist outside the Replit API.
+- [ ] Add next-of-kin details for Peter Kamau Kariuki (his national ID and date of birth were recovered from his uploaded ID).
+- [ ] Anthony Njuguna Njoroge has no profile photo in Replit.
 - [ ] Create a manager account if delegation is needed.
 
 **Acceptance:** staff and leave screens match the source; staff can sign in once accounts are created.
@@ -86,6 +90,11 @@ The Replit export is structurally complete but has major missing values:
 | Tenants missing ID number | 36 of 36 |
 | Bank accounts with masked-only numbers | 35 of 35 |
 | Property contacts / documents / tenant documents / vehicles | 0 imported |
+
+Additional source notes:
+
+- Replit’s property activity feed was almost entirely QA utility-verification entries; it was not imported. The meaningful property flags were preserved in internal notes.
+- One portfolio-wide deposit-holding note (Sanlam Muthaiga fixed deposit) has no equivalent field and was not stored.
 
 As a result, the dashboard shows **Ksh 0 + USD 2,500 monthly rent** and the lease register shows Ksh 0, even though Replit’s property cards show rent totals. The app derives rent from leases; Replit’s lease API does not expose those amounts.
 
@@ -266,7 +275,7 @@ Do not re-open these unless a regression is found:
 - **15 MB server-side upload limit** on all upload endpoints, with 413 responses.
 - **Audit log** populated across Staff, Leave, Property and Workspace changes, including old/new values and stable ordering.
 - **Property demo replaced with the Replit portfolio** — 20 properties, 38 units, 36 tenants, 36 active leases, 35 bank accounts, 20 owners and 8 insurance policies.
-- **People demo replaced with the Replit PeopleHub** — 6 staff, 16 leave requests, 2 locations and recomputed 2026 leave balances.
+- **People demo replaced with the Replit PeopleHub** — 6 staff, 16 leave requests, 2 locations, 24 balance rows, 20 documents and 5 profile photos.
 - Leave edit `Decimal - float` crash fixed.
 
 ---
