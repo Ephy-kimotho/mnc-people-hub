@@ -1,0 +1,233 @@
+# MNC People Hub — Future Improvements
+
+Internal portal for **People** (staff, leave) and **Property** (portfolio, tenants, leases, finance).
+
+- **Status:** product parity complete; audit log live; preparing for real data and production hardening.
+- **Last reviewed:** 27 November 2026.
+- **Scope:** everything still open after the lease-document, gazette, compliance-payment, upload-limit and audit-log work.
+
+## Priority guide
+
+| Priority | Meaning |
+| --- | --- |
+| **P0** | Required before go-live |
+| **P1** | Should be done soon after launch |
+| **P2** | Nice-to-have / later improvement |
+
+---
+
+## 1. Go-live blockers (P0)
+
+### 1.1 Replace demo data with real data
+
+The current dataset was seeded so the app could be reviewed. Demo rows are marked **“Demo seed record”** where applicable.
+
+| Entity | Demo count |
+| --- | ---: |
+| Properties | 9 |
+| Units | 42 |
+| Tenants | 39 |
+| Leases | 40 (39 active, 1 terminated) |
+| Staff | 8 |
+| Leave requests | 10 |
+| Insurance policies | 3 |
+| Property owners | 6 |
+| Property contacts | 5 |
+| Maintenance records | 4 |
+| Rent payments | 4 |
+| Compliance payments | 2 |
+| Tenant vehicles | 1 |
+| Lease agreements | 1 demo PDF |
+| Acknowledged alerts | 1 |
+
+Tasks:
+
+- [ ] Export or archive the demo dataset for reference.
+- [ ] Load real properties, units, tenants, leases, staff, leave, bank accounts and policies.
+- [ ] Reconcile monthly rent, deposits, service charges and compliance figures against the source records.
+- [ ] Delete all demo records and the demo lease PDF.
+- [ ] Confirm no “Demo seed record” text remains.
+
+**Acceptance:** register totals and dashboard figures match the real portfolio; no demo rows remain.
+
+### 1.2 Remove demo logins and rotate seeded passwords
+
+Eight demo staff auth accounts were auto-created with `must_change_password = true`; only Grace’s password is known. The seeded `admin` and `manager1` passwords are also known.
+
+Tasks:
+
+- [ ] Delete or deactivate demo auth accounts that do not belong to real staff.
+- [ ] Rotate `admin`, `manager1` and `grace.wanjiru` passwords.
+- [ ] Audit all users with `must_change_password = true`.
+- [ ] Verify every active user has a unique, owner-set password.
+- [ ] Consider MFA for admin accounts.
+
+**Acceptance:** no shared or documented production credentials remain.
+
+### 1.3 Make the R2 bucket private
+
+Documents already use short-lived presigned URLs (900 seconds) and the API no longer exposes storage keys or public URLs. The bucket policy itself still needs locking down.
+
+Tasks:
+
+- [ ] Block all public access on the R2 bucket.
+- [ ] Disable public bucket URLs.
+- [ ] Rotate R2 access keys if they were ever exposed.
+- [ ] Re-test upload, view and delete for staff, leave, property, tenant and lease documents.
+- [ ] Confirm presigned URLs expire and cannot be reused after expiry.
+
+**Acceptance:** anonymous requests to object URLs fail; the app still works through signed URLs.
+
+### 1.4 Backups and restore drills
+
+- [ ] Automated daily PostgreSQL backups.
+- [ ] Off-site copy (separate bucket/account) with at least 30-day retention.
+- [ ] R2 object versioning and lifecycle policy.
+- [ ] Documented restore procedure.
+- [ ] Quarterly restore test into staging; record the result.
+
+**Acceptance:** a restore has been performed successfully, not just configured.
+
+### 1.5 Monitoring, logging and alerting
+
+- [ ] Uptime checks for the frontend and each `/api/*/health` endpoint.
+- [ ] Error tracking for Next.js and FastAPI (Sentry or equivalent).
+- [ ] Alerts to email/WhatsApp for 5xx spikes, database failures, disk usage and TLS expiry.
+- [ ] Structured logs with retention and correlation IDs.
+- [ ] Audit-log write failures surfaced to monitoring (currently swallowed by design).
+
+**Acceptance:** a simulated failure produces an alert; audit failures are visible.
+
+### 1.6 Production notifications
+
+- [ ] Confirm WhatsApp and email credentials, sender identity and templates.
+- [ ] Test leave submitted, approved, rejected and recalled messages.
+- [ ] Test welcome messages for new staff.
+- [ ] Test reminders and birthday/anniversary notifications.
+- [ ] Add rate limiting, retries and failure visibility.
+
+**Acceptance:** real test messages are delivered to real numbers/inboxes.
+
+### 1.7 Real-device mobile QA
+
+Responsive layouts are implemented but only checked at desktop sizes.
+
+- [ ] iPhone and Android at ~390 px width.
+- [ ] Property register and property detail.
+- [ ] Draft/edit lease dialog and lease document actions.
+- [ ] Mobile lease/rent/deposit cards.
+- [ ] Leave requests, submit-leave form, month calendar and mobile agenda.
+- [ ] Audit log and audit value expansion.
+
+**Acceptance:** no horizontal scrolling, clipped dialogs or unusable form controls.
+
+### 1.8 Automated tests and CI reliability
+
+CI currently builds images but runs no application tests.
+
+- [ ] Backend API tests for authentication, RBAC, properties, leases, leave, document signing and upload limits.
+- [ ] Frontend smoke tests with Playwright for login, property/tenant/lease CRUD and audit log.
+- [ ] Run tests on every PR and block deploys on failure.
+- [ ] Improve Docker build caching so image builds are not routinely slow.
+- [ ] Deploy automatically after green CI instead of dispatching manually.
+
+**Acceptance:** CI must pass before deploy; a failing test blocks release.
+
+---
+
+## 2. Product improvements
+
+### 2.1 Audit log filters and CSV export (P1)
+
+The audit log is populated and admin-only, but currently supports pagination only.
+
+- [ ] Server-side filters: user, entity, action, date range and free-text search.
+- [ ] CSV export of the filtered log.
+- [ ] Preserve stable ordering by timestamp and ID.
+
+Relevant files:
+
+- `components/audit/audit-view.tsx`
+- `services/mnc/app/api/mnc.py`
+- `services/mnc/app/repositories/mnc.py`
+
+**Acceptance:** an admin can find and export a specific user’s property changes.
+
+### 2.2 Full old → new coverage in the audit log (P2)
+
+Staff and leave edits store before/after values. Property, unit, tenant, lease and bank-account updates currently store only the new values.
+
+- [ ] Fetch a before-snapshot in each update handler and pass `old_value` to `log_mnc`.
+- [ ] Keep before/after data admin-only.
+
+**Acceptance:** every update entry shows `old → new`, and unchanged fields stay hidden.
+
+### 2.3 Compliance payment automation (P1)
+
+Land rent and county rates status is manual. A payment does not automatically mark the account “Paid” because there is no amount-due or period model, so partial payments cannot be evaluated.
+
+- [ ] Add amount due / period (or an obligations table) for land rent and county rates.
+- [ ] Calculate outstanding balances and support partial payments.
+- [ ] Auto-update status to `Paid` / `In Arrears` only when fully settled.
+- [ ] Show outstanding amounts on the Compliance card.
+
+**Acceptance:** logging a payment updates status correctly; partial payments remain outstanding.
+
+### 2.4 Gazette status in the completeness score (P2)
+
+Gazette status is stored, editable and displayed, but it does not affect the property completeness percentage.
+
+- [ ] Add gazette status to the completeness checks with a sensible default.
+- [ ] Update the completeness explanation if one is shown.
+
+**Acceptance:** a property missing gazette information cannot show 100% complete.
+
+### 2.5 Combined audit view (P2)
+
+Auth events (login, user creation, password reset) live on **Auth Audit**, while business changes live on **Audit Log**. The pages link to each other.
+
+- [ ] Decide whether admins need a single combined feed.
+- [ ] If yes, add an `include_auth` filter or merge the two APIs.
+
+**Acceptance:** admins can see the full history in one place without duplicating entries.
+
+### 2.6 Audit retention and archive policy (P2)
+
+`mnc.audit_log` is immutable and will grow indefinitely.
+
+- [ ] Define a retention period (for example, seven years).
+- [ ] Archive older entries to R2 as CSV/JSON.
+- [ ] Document who can access the archive.
+- [ ] Never allow edits; deletions only through a documented retention job.
+
+**Acceptance:** retention is documented and an archive job exists.
+
+---
+
+## 3. Recently completed (for context)
+
+Do not re-open these unless a regression is found:
+
+- Lease agreement **upload / view / delete** on existing leases, with private signed URLs.
+- **Gazette status** in the property API, form and compliance card.
+- **Land rent / county rates payment history** with logging and deletion.
+- **Lease document original filename** stored and displayed.
+- **15 MB server-side upload limit** on all upload endpoints, with 413 responses.
+- **Audit log** populated across Staff, Leave, Property and Workspace changes, including old/new values and stable ordering.
+- Leave edit `Decimal - float` crash fixed.
+
+---
+
+## 4. Go-live checklist
+
+Use this as the final release gate:
+
+- [ ] Real data loaded; demo data and demo documents removed.
+- [ ] Demo accounts removed; admin/manager/demo passwords rotated.
+- [ ] R2 bucket private; signed document access re-tested.
+- [ ] Database backup restored successfully in staging.
+- [ ] Uptime, error tracking and alerting active.
+- [ ] WhatsApp/email notifications tested in production configuration.
+- [ ] Mobile QA passed on real iOS and Android devices.
+- [ ] CI runs tests and blocks failing deploys.
+- [ ] Audit log checked after the go-live smoke test.
