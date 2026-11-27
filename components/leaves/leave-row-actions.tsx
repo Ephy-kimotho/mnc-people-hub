@@ -3,6 +3,7 @@
 import {
   CheckIcon,
   EllipsisVerticalIcon,
+  PaperclipIcon,
   PencilIcon,
   RotateCcwIcon,
   XIcon,
@@ -29,6 +30,7 @@ type LeaveRowActionsProps = {
   onReject?: () => void
   onEdit: () => void
   onRecall?: () => void
+  onViewDocument?: () => void
 }
 
 // Only actions the user may take, and that suit the request's status, show
@@ -40,6 +42,7 @@ export function LeaveRowActions({
   onReject,
   onEdit,
   onRecall,
+  onViewDocument,
 }: LeaveRowActionsProps) {
   const pending = status === "pending"
   const active = pending || status === "approved"
@@ -53,6 +56,12 @@ export function LeaveRowActions({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-44">
         <AddToCalendarSub event={event} />
+        {onViewDocument && (
+          <DropdownMenuItem onSelect={onViewDocument}>
+            <PaperclipIcon />
+            View document
+          </DropdownMenuItem>
+        )}
         {pending && (onApprove || onReject) && (
           <>
             <DropdownMenuSeparator />

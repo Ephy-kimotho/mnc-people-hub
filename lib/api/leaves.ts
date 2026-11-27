@@ -45,6 +45,8 @@ function toLeaveRequest(record: LeaveRecord): LeaveRequest {
     reason: record.reason ?? undefined,
     rejectionReason:
       status === "rejected" ? (record.review_note ?? undefined) : undefined,
+    hasDocument: record.has_document ?? Boolean(record.document_name),
+    documentName: record.document_name ?? undefined,
     createdAt: record.created_at,
   }
 }
@@ -67,10 +69,9 @@ export async function fetchLeaveRequests(filters: LeaveFilters) {
 // The API wants the leave type's label ("Annual"), "HH:mm:ss" times and only
 // the fields that match the duration type. Half days and hours end on the
 // start date, and hourly leave sends the hours between the two times.
-export async function createLeaveRequest(values: LeaveRequestValues) {
+function leavePayload(values: LeaveRequestValues) {
   const { durationType } = values
-  await axiosInstance.post("/leave/leaves", {
-    staff_id: values.staffId,
+  return {
     leave_type: leaveTypeLabels[values.type],
     start_date: values.startDate,
     end_date: durationType === "full_day" ? values.endDate : values.startDate,
@@ -81,10 +82,31 @@ export async function createLeaveRequest(values: LeaveRequestValues) {
       durationType === "hours"
         ? hoursBetween(values.startTime, values.endTime)
         : undefined,
-    start_time: `${values.startTime}:00`,
-    end_time: `${values.endTime}:00`,
+    start_time:
+      durationType === "full_day" ? undefined : `${values.startTime}:00`,
+    end_time:
+      durationType === "full_day" ? undefined : `${values.endTime}:00`,
     reason: values.reason || undefined,
-  })
+  }
+}
+
+export async function createLeaveRequest(values: LeaveRequestValues) {
+  const response = await axiosInstance.post<LeaveRecord>(
+    "/leave/leaves",
+    leavePayload(values)
+  )
+  return response.data
+}
+
+export async function updateLeaveRequest(
+  requestId: string,
+  values: LeaveRequestValues
+) {
+  const response = await axiosInstance.patch<LeaveRecord>(
+    `/leave/leaves/${requestId}`,
+    leavePayload(values)
+  )
+  return response.data
 }
 
 // The approval note is optional, so an empty one is left off
@@ -101,6 +123,31 @@ export async function rejectLeaveRequest(requestId: string, note: string) {
 
 export async function recallLeaveRequest(requestId: string, reason: string) {
   await axiosInstance.post(`/leave/leaves/${requestId}/recall`, { reason })
+}
+
+// Supporting documents (e.g. a sick note). Files are served through
+// short-lived signed URLs, never a public bucket URL.
+export async function uploadLeaveDocument(requestId: string, file: File) {
+  const body = new FormData()
+  body.append("file", file)
+  const response = await axiosInstance.post<{
+    filename: string
+    uploaded: boolean
+  }>(`/leave/leaves/${requestId}/document`, body)
+  return response.data
+}
+
+export async function fetchLeaveDocumentUrl(requestId: string) {
+  const response = await axiosInstance.get<{
+    url: string
+    expires_in: number | null
+    filename: string | null
+  }>(`/leave/leaves/${requestId}/document`)
+  return response.data
+}
+
+export async function deleteLeaveDocument(requestId: string) {
+  await axiosInstance.delete(`/leave/leaves/${requestId}/document`)
 }
 
 

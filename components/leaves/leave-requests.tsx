@@ -1,6 +1,9 @@
 "use client"
 
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { SearchIcon } from "lucide-react"
 import { useState } from "react"
+import toast from "react-hot-toast"
 
 import { PageHeader } from "@/components/dashboard/page-header"
 import { LeaveStatusBadge } from "@/components/leave/leave-status-badge"
@@ -13,16 +16,22 @@ import { TablePagination } from "@/components/table-pagination"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useVisibleLeaveRequests } from "@/hooks/use-leave-requests"
 import { usePagination } from "@/hooks/use-pagination"
 import { getErrorMessage } from "@/lib/api/errors"
+import {
+  fetchLeaveDocumentUrl,
+  leaveKeys,
+  updateLeaveRequest,
+} from "@/lib/api/leaves"
 import { formatDateRange } from "@/lib/format"
-import { durationLabel, leaveDays, leaveTypeLabels } from "@/lib/leave"
+import { durationLabel, leaveTypeLabels } from "@/lib/leave"
 import { canRecallLeave, canReviewLeave } from "@/lib/permissions"
 import type { LeaveRequestValues } from "@/lib/schemas/leave"
-import type { LeaveRequest, LeaveStatus } from "@/lib/types"
+import type { LeaveRequest, LeaveStatus, LeaveType } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/providers/auth-provider"
 
@@ -52,15 +61,37 @@ type LeaveQuery = ReturnType<typeof useVisibleLeaveRequests>
 // Staff only see their own requests and can only recall them.
 export function LeaveRequests() {
   const leaveQuery = useVisibleLeaveRequests()
-  const [changes, setChanges] = useState<Record<string, Partial<LeaveRequest>>>(
-    {}
-  )
+  const queryClient = useQueryClient()
   const [openDialog, setOpenDialog] = useState<DialogKind | null>(null)
   const [selected, setSelected] = useState<LeaveRequest>()
+  const [search, setSearch] = useState("")
+  const [typeFilter, setTypeFilter] = useState<LeaveType | "all">("all")
+
+  const edit = useMutation({
+    mutationFn: ({ id, values }: { id: string; values: LeaveRequestValues }) =>
+      updateLeaveRequest(id, values),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: leaveKeys.all })
+      toast.success("Leave request updated")
+      setOpenDialog(null)
+    },
+    onError: (error) =>
+      toast.error(getErrorMessage(error, "Couldn't update the leave request.")),
+  })
 
   const selectedName = selected?.staffName
+  const term = search.trim().toLowerCase()
   const sorted = (leaveQuery.data ?? [])
-    .map((r) => ({ ...r, ...changes[r.id] }))
+    .filter((request) => {
+      const matchesSearch =
+        !term ||
+        [request.staffName, request.staffRole]
+          .join(" ")
+          .toLowerCase()
+          .includes(term)
+      const matchesType = typeFilter === "all" || request.type === typeFilter
+      return matchesSearch && matchesType
+    })
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
   function open(kind: DialogKind, request: LeaveRequest) {
@@ -72,20 +103,18 @@ export function LeaveRequests() {
     if (!isOpen) setOpenDialog(null)
   }
 
-  function update(id: string, change: Partial<LeaveRequest>) {
-    setChanges((prev) => ({ ...prev, [id]: { ...prev[id], ...change } }))
-  }
-
   function saveEdit(values: LeaveRequestValues) {
     if (!selected) return
-    update(selected.id, {
-      type: values.type,
-      startDate: values.startDate,
-      endDate: values.endDate,
-      reason: values.reason || undefined,
-      days: leaveDays(values),
-    })
-    setOpenDialog(null)
+    edit.mutate({ id: selected.id, values })
+  }
+
+  async function viewDocument(request: LeaveRequest) {
+    try {
+      const { url } = await fetchLeaveDocumentUrl(request.id)
+      window.open(url, "_blank", "noopener,noreferrer")
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Couldn't open the document."))
+    }
   }
 
   return (
@@ -95,6 +124,32 @@ export function LeaveRequests() {
         title="Leave Requests"
         description="Review and manage time off requests."
       />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative min-w-64 flex-1">
+          <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search by staff name or role…"
+            className="h-11 rounded-full pl-9"
+          />
+        </div>
+        <select
+          value={typeFilter}
+          onChange={(event) =>
+            setTypeFilter(event.target.value as LeaveType | "all")
+          }
+          className="h-11 rounded-full border bg-background px-3.5 text-sm"
+          aria-label="Filter by leave type"
+        >
+          <option value="all">All types</option>
+          <option value="annual">Annual</option>
+          <option value="sick">Sick</option>
+          <option value="emergency">Emergency</option>
+          <option value="unpaid">Unpaid</option>
+        </select>
+      </div>
 
       <Card className="@container gap-0 rounded-2xl py-0 shadow-xs">
         <Tabs defaultValue="pending" className="gap-0">
@@ -121,6 +176,7 @@ export function LeaveRequests() {
                 )}
                 empty={tab.empty}
                 onOpen={open}
+                onViewDocument={viewDocument}
               />
             </TabsContent>
           ))}
@@ -137,6 +193,7 @@ export function LeaveRequests() {
         onOpenChange={closeDialog}
         request={selected}
         name={selectedName}
+        saving={edit.isPending}
         onSave={saveEdit}
       />
       <RejectLeaveDialog
@@ -160,11 +217,13 @@ function LeaveTable({
   rows,
   empty,
   onOpen,
+  onViewDocument,
 }: {
   query: LeaveQuery
   rows: LeaveRequest[]
   empty: string
   onOpen: (kind: DialogKind, request: LeaveRequest) => void
+  onViewDocument: (request: LeaveRequest) => void
 }) {
   const { user } = useAuth()
   const canReview = canReviewLeave(user)
@@ -249,6 +308,11 @@ function LeaveTable({
                       canReview ? () => onOpen("reject", request) : undefined
                     }
                     onEdit={() => onOpen("edit", request)}
+                    onViewDocument={
+                      request.hasDocument
+                        ? () => onViewDocument(request)
+                        : undefined
+                    }
                     onRecall={
                       canRecallLeave(user, request)
                         ? () => onOpen("recall", request)

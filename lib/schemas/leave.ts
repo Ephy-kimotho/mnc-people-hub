@@ -30,30 +30,47 @@ export const leaveRequestSchema = z
     halfDayPeriod: z.enum(halfDayPeriods),
     startDate: z.iso.date("Pick a start date"),
     endDate: z.string(),
-    startTime: z.iso.time({ precision: -1, error: "Pick a start time" }),
-    endTime: z.iso.time({ precision: -1, error: "Pick an end time" }),
+    startTime: z.string(),
+    endTime: z.string(),
     reason: z
       .string()
       .trim()
       .max(REASON_MAX, `Keep it under ${REASON_MAX} characters`),
   })
   .superRefine((v, ctx) => {
-    // "HH:mm" times compare correctly as strings, as do ISO dates
-    const singleDay = v.durationType !== "full_day" || v.endDate === v.startDate
-    if (singleDay && v.endTime <= v.startTime) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["endTime"],
-        message: "End time must be after the start time",
-      })
-    } else if (v.durationType === "hours") {
-      const hours = hoursBetween(v.startTime, v.endTime)
-      if (hours < 0.5 || hours > WORKDAY_HOURS) {
+    // Full-day requests don't need times; half days and hourly leave do.
+    if (v.durationType !== "full_day") {
+      const startOk = z.iso.time({ precision: -1 }).safeParse(v.startTime).success
+      const endOk = z.iso.time({ precision: -1 }).safeParse(v.endTime).success
+      if (!startOk) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["startTime"],
+          message: "Pick a start time",
+        })
+      }
+      if (!endOk) {
         ctx.addIssue({
           code: "custom",
           path: ["endTime"],
-          message: `Hourly leave must be between 30 minutes and ${WORKDAY_HOURS} hours`,
+          message: "Pick an end time",
         })
+      }
+      if (startOk && endOk && v.endTime <= v.startTime) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["endTime"],
+          message: "End time must be after the start time",
+        })
+      } else if (v.durationType === "hours" && startOk && endOk) {
+        const hours = hoursBetween(v.startTime, v.endTime)
+        if (hours < 0.5 || hours > WORKDAY_HOURS) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["endTime"],
+            message: `Hourly leave must be between 30 minutes and ${WORKDAY_HOURS} hours`,
+          })
+        }
       }
     }
 

@@ -1,6 +1,10 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
-import { fetchLeaveRequests, leaveKeys } from "@/lib/api/leaves"
+import {
+  fetchLeaveBalances,
+  fetchLeaveRequests,
+  leaveKeys,
+} from "@/lib/api/leaves"
 import { canReviewLeave, canSeeLeave } from "@/lib/permissions"
 import type { LeaveFilters } from "@/lib/types"
 import { useAuth } from "@/providers/auth-provider"
@@ -16,6 +20,14 @@ export function useLeaveRequests(
     queryFn: () => fetchLeaveRequests(filters),
     placeholderData: keepPreviousData,
     enabled,
+  })
+}
+
+export function useLeaveBalances(staffId: string) {
+  return useQuery({
+    queryKey: leaveKeys.balances(staffId),
+    queryFn: () => fetchLeaveBalances(staffId),
+    enabled: Boolean(staffId),
   })
 }
 

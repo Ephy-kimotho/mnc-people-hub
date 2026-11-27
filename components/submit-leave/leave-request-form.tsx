@@ -3,7 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { getYear } from "date-fns"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { CalendarIcon, ClockIcon, InfoIcon } from "lucide-react"
+import {
+  CalendarIcon,
+  ClockIcon,
+  InfoIcon,
+  UploadCloudIcon,
+} from "lucide-react"
+import { useRef, useState } from "react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import toast from "react-hot-toast"
 
@@ -21,10 +27,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { useLeaveRequests } from "@/hooks/use-leave-requests"
+import {
+  useLeaveBalances,
+  useLeaveRequests,
+} from "@/hooks/use-leave-requests"
 import { useStaff } from "@/hooks/use-staff"
 import { getErrorMessage } from "@/lib/api/errors"
-import { createLeaveRequest, leaveKeys } from "@/lib/api/leaves"
+import {
+  createLeaveRequest,
+  leaveKeys,
+  uploadLeaveDocument,
+} from "@/lib/api/leaves"
 import { formatDayCount } from "@/lib/format"
 import {
   ANNUAL_LEAVE_DAYS,
@@ -79,8 +92,7 @@ export function LeaveRequestForm({
   const staffQuery = useStaff()
   const staff = (staffQuery.data ?? []).toSorted((a, b) =>
     a.full_name.localeCompare(b.full_name)
-  )
-  // A staff member passed in stays picked after each submit
+  )  // A staff member passed in stays picked after each submit
   const initialValues = {
     ...defaultValues,
     staffId: selfOnly ? (user?.staff_id ?? "") : initialStaffId,
@@ -116,7 +128,20 @@ export function LeaveRequestForm({
   const leaveTaken = hasStaff
     ? annualLeaveTaken(historyQuery.data ?? [], staffId)
     : 0
-  const remaining = Math.max(ANNUAL_LEAVE_DAYS - leaveTaken, 0)
+  const balances = useLeaveBalances(staffId)
+  const year = getYear(new Date())
+  const balanceFor = (type: LeaveType) =>
+    (balances.data ?? []).find(
+      (row) => row.year === year && row.leave_type.toLowerCase() === type
+    )
+  const annualBalance = balanceFor("annual")
+  const sickBalance = balanceFor("sick")
+  const emergencyBalance = balanceFor("emergency")
+  const remaining = annualBalance
+    ? annualBalance.days_remaining
+    : Math.max(ANNUAL_LEAVE_DAYS - leaveTaken, 0)
+  const [file, setFile] = useState<File>()
+  const fileInput = useRef<HTMLInputElement>(null)
   // Live preview of the days used once the duration is filled in
   const hours = startTime && endTime ? hoursBetween(startTime, endTime) : 0
   const days =
@@ -137,16 +162,34 @@ export function LeaveRequestForm({
       value: "annual",
       label: "Annual Leave",
       hint: hasStaff
-        ? `${remaining} of ${ANNUAL_LEAVE_DAYS} days left`
+        ? `${remaining} of ${annualBalance?.entitlement_days ?? ANNUAL_LEAVE_DAYS} days left`
         : `Deducted from ${ANNUAL_LEAVE_DAYS} days`,
     },
-    { value: "sick", label: "Sick Leave", hint: "Medical reasons" },
-    { value: "emergency", label: "Emergency", hint: "Unforeseen events" },
+    {
+      value: "sick",
+      label: "Sick Leave",
+      hint: sickBalance
+        ? `${sickBalance.days_remaining} of ${sickBalance.entitlement_days} days left`
+        : "Medical reasons",
+    },
+    {
+      value: "emergency",
+      label: "Emergency",
+      hint: emergencyBalance
+        ? `${emergencyBalance.days_remaining} of ${emergencyBalance.entitlement_days} days left`
+        : "Unforeseen events",
+    },
     { value: "unpaid", label: "Unpaid", hint: "No balance left" },
   ]
 
   const mutation = useMutation({
-    mutationFn: createLeaveRequest,
+    mutationFn: async (values: LeaveRequestValues) => {
+      const created = await createLeaveRequest(values)
+      if (file) {
+        await uploadLeaveDocument(created.request_id, file)
+      }
+      return created
+    },
     onSuccess: (_data, values) => {
       void queryClient.invalidateQueries({ queryKey: leaveKeys.all })
       const name = selfOnly
@@ -154,6 +197,7 @@ export function LeaveRequestForm({
         : staff.find((s) => s.staff_id === values.staffId)?.full_name
       toast.success(`Leave request submitted for ${name}`)
       form.reset(initialValues)
+      setFile(undefined)
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, "Couldn't submit this leave request."))
@@ -165,6 +209,20 @@ export function LeaveRequestForm({
     const { startTime, endTime } = halfDayTimes[period]
     form.setValue("startTime", startTime, { shouldValidate: true })
     form.setValue("endTime", endTime, { shouldValidate: true })
+  }
+
+  function onPickFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const picked = event.target.files?.[0]
+    if (!picked) return
+    if (!["application/pdf", "image/jpeg", "image/png"].includes(picked.type)) {
+      toast.error("Choose a PDF, JPEG or PNG file.")
+      return
+    }
+    if (picked.size > 15 * 1024 * 1024) {
+      toast.error("The file must be 15 MB or smaller.")
+      return
+    }
+    setFile(picked)
   }
 
   function onSubmit(values: LeaveRequestValues) {
@@ -379,50 +437,52 @@ export function LeaveRequestForm({
           />
         )}
 
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Controller
-            name="startTime"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="gap-2">
-                <FieldLabel htmlFor="leave-start-time">
-                  <ClockIcon className="size-4 text-muted-foreground" />
-                  Start Time
-                </FieldLabel>
-                <TimePicker
-                  id="leave-start-time"
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  invalid={fieldState.invalid}
-                  className="h-12 rounded-xl px-4"
-                />
-                <FieldError errors={[fieldState.error]} className="text-xs" />
-              </Field>
-            )}
-          />
-          <Controller
-            name="endTime"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid} className="gap-2">
-                <FieldLabel htmlFor="leave-end-time">
-                  <ClockIcon className="size-4 text-muted-foreground" />
-                  End Time
-                </FieldLabel>
-                <TimePicker
-                  id="leave-end-time"
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  invalid={fieldState.invalid}
-                  className="h-12 rounded-xl px-4"
-                />
-                <FieldError errors={[fieldState.error]} className="text-xs" />
-              </Field>
-            )}
-          />
-        </div>
+        {durationType !== "full_day" && (
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Controller
+              name="startTime"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid} className="gap-2">
+                  <FieldLabel htmlFor="leave-start-time">
+                    <ClockIcon className="size-4 text-muted-foreground" />
+                    Start Time
+                  </FieldLabel>
+                  <TimePicker
+                    id="leave-start-time"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    invalid={fieldState.invalid}
+                    className="h-12 rounded-xl px-4"
+                  />
+                  <FieldError errors={[fieldState.error]} className="text-xs" />
+                </Field>
+              )}
+            />
+            <Controller
+              name="endTime"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid} className="gap-2">
+                  <FieldLabel htmlFor="leave-end-time">
+                    <ClockIcon className="size-4 text-muted-foreground" />
+                    End Time
+                  </FieldLabel>
+                  <TimePicker
+                    id="leave-end-time"
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    invalid={fieldState.invalid}
+                    className="h-12 rounded-xl px-4"
+                  />
+                  <FieldError errors={[fieldState.error]} className="text-xs" />
+                </Field>
+              )}
+            />
+          </div>
+        )}
 
         <Controller
           name="reason"
@@ -448,6 +508,32 @@ export function LeaveRequestForm({
             </Field>
           )}
         />
+
+        <div className="grid gap-2">
+          <FieldLabel>Supporting document</FieldLabel>
+          <button
+            type="button"
+            onClick={() => fileInput.current?.click()}
+            className="flex items-center gap-3 rounded-xl border border-dashed px-4 py-4 text-left text-sm transition-colors hover:bg-muted/40"
+          >
+            <UploadCloudIcon className="size-5 shrink-0 text-muted-foreground" />
+            <span>
+              <span className="font-medium">
+                {file ? file.name : "Attach a document"}
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                Optional. PDF, JPEG or PNG, up to 15 MB.
+              </span>
+            </span>
+          </button>
+          <input
+            ref={fileInput}
+            type="file"
+            accept=".pdf,image/jpeg,image/png"
+            className="hidden"
+            onChange={onPickFile}
+          />
+        </div>
 
         <div className="flex gap-3 rounded-xl border border-brand/30 bg-brand-soft p-4">
           <InfoIcon className="mt-0.5 size-5 shrink-0" />

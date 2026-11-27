@@ -210,9 +210,10 @@ export type LeaveRecord = {
   recalled_at: string | null
   recall_reason: string | null
   balance_before: number | null
-  document_url: string | null
-  document_path: string | null
+  document_url?: string | null
+  document_path?: string | null
   document_name: string | null
+  has_document?: boolean
   created_at: string
 }
 
@@ -250,6 +251,8 @@ export type LeaveRequest = {
   endTime?: string
   reason?: string
   rejectionReason?: string
+  hasDocument?: boolean
+  documentName?: string
   createdAt: string
 }
 
