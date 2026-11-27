@@ -626,6 +626,27 @@ export type PropertyContact = {
   created_at: string
 }
 
+export type TenantDocument = {
+  document_id: string
+  tenant_id: string
+  category: string
+  name: string
+  mime_type: string | null
+  file_size_bytes: number | null
+  uploaded_at: string
+}
+
+export type TenantVehicle = {
+  vehicle_id: string
+  tenant_id: string
+  make: string
+  model: string | null
+  registration_number: string
+  colour: string | null
+  notes: string | null
+  created_at: string
+}
+
 // ── MNC core ──────────────────────────────────────────────────────
 
 export type Announcement = {

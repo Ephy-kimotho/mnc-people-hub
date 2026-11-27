@@ -18,7 +18,9 @@ import {
   fetchReminders,
   fetchRentCollection,
   fetchTenant,
+  fetchTenantDocuments,
   fetchTenants,
+  fetchTenantVehicles,
   fetchUsdKesRate,
   fetchUnits,
   propertyKeys,
@@ -119,6 +121,22 @@ export function useTenant(tenantId: string) {
   return useQuery({
     queryKey: propertyKeys.tenant(tenantId),
     queryFn: () => fetchTenant(tenantId),
+    enabled: Boolean(tenantId),
+  })
+}
+
+export function useTenantDocuments(tenantId: string) {
+  return useQuery({
+    queryKey: propertyKeys.tenantDocuments(tenantId),
+    queryFn: () => fetchTenantDocuments(tenantId),
+    enabled: Boolean(tenantId),
+  })
+}
+
+export function useTenantVehicles(tenantId: string) {
+  return useQuery({
+    queryKey: propertyKeys.tenantVehicles(tenantId),
+    queryFn: () => fetchTenantVehicles(tenantId),
     enabled: Boolean(tenantId),
   })
 }

@@ -26,6 +26,8 @@ import type {
   Reminder,
   RentCollection,
   Tenant,
+  TenantDocument,
+  TenantVehicle,
 } from "@/lib/types"
 
 export const propertyKeys = {
@@ -45,6 +47,10 @@ export const propertyKeys = {
   tenants: (propertyId?: string) =>
     ["property", "tenants", propertyId ?? "all"] as const,
   tenant: (id: string) => ["property", "tenants", "detail", id] as const,
+  tenantDocuments: (id: string) =>
+    ["property", "tenants", "documents", id] as const,
+  tenantVehicles: (id: string) =>
+    ["property", "tenants", "vehicles", id] as const,
   leases: (filters: { property_id?: string; status?: string }) =>
     ["property", "leases", filters] as const,
   banks: () => ["property", "bank-accounts"] as const,
@@ -332,6 +338,71 @@ export async function updateTenant(
 
 export async function deleteTenant(tenantId: string) {
   await axiosInstance.delete(`/property/tenants/${tenantId}`)
+}
+
+// ── Tenant documents & vehicles ───────────────────────────────────
+
+export async function fetchTenantDocuments(tenantId: string) {
+  const response = await axiosInstance.get<TenantDocument[]>(
+    `/property/tenants/${tenantId}/documents`
+  )
+  return response.data
+}
+
+export async function uploadTenantDocument(
+  tenantId: string,
+  values: { name: string; category: string; file: File }
+) {
+  const body = new FormData()
+  body.append("file", values.file)
+  body.append("name", values.name)
+  body.append("category", values.category)
+  const response = await axiosInstance.post<TenantDocument>(
+    `/property/tenants/${tenantId}/documents`,
+    body
+  )
+  return response.data
+}
+
+export async function fetchTenantDocumentUrl(documentId: string) {
+  const response = await axiosInstance.get<{
+    url: string
+    expires_in: number | null
+    filename: string
+  }>(`/property/tenant-documents/${documentId}/url`)
+  return response.data
+}
+
+export async function deleteTenantDocument(documentId: string) {
+  await axiosInstance.delete(`/property/tenant-documents/${documentId}`)
+}
+
+export async function fetchTenantVehicles(tenantId: string) {
+  const response = await axiosInstance.get<TenantVehicle[]>(
+    `/property/tenants/${tenantId}/vehicles`
+  )
+  return response.data
+}
+
+export async function createTenantVehicle(
+  tenantId: string,
+  values: {
+    make: string
+    model?: string
+    registration_number: string
+    colour?: string
+    notes?: string
+  }
+) {
+  const response = await axiosInstance.post<TenantVehicle>(
+    `/property/tenants/${tenantId}/vehicles`,
+    clean(values)
+  )
+  return response.data
+}
+
+export async function deleteTenantVehicle(vehicleId: string) {
+  await axiosInstance.delete(`/property/tenant-vehicles/${vehicleId}`)
 }
 
 // ── Leases ────────────────────────────────────────────────────────

@@ -4,10 +4,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowLeftIcon,
   CalendarDaysIcon,
+  CarIcon,
   ExternalLinkIcon,
   Loader2Icon,
+  PaperclipIcon,
   PenLineIcon,
+  PlusIcon,
   ShieldCheckIcon,
+  Trash2Icon,
+  UploadCloudIcon,
   UserIcon,
 } from "lucide-react"
 import Link from "next/link"
@@ -20,14 +25,23 @@ import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TenantDialog } from "@/components/property/tenant-dialog"
-import { useTenant } from "@/hooks/use-properties"
+import { TenantDocumentDialog } from "@/components/property/tenant-document-dialog"
+import { TenantVehicleDialog } from "@/components/property/tenant-vehicle-dialog"
+import {
+  useTenant,
+  useTenantDocuments,
+  useTenantVehicles,
+} from "@/hooks/use-properties"
 import { getErrorMessage } from "@/lib/api/errors"
 import {
+  deleteTenantDocument,
+  deleteTenantVehicle,
+  fetchTenantDocumentUrl,
   propertyKeys,
   updateTenant,
   uploadTenantPhoto,
 } from "@/lib/api/properties"
-import { formatCurrency, formatDate } from "@/lib/format"
+import { formatCurrency, formatDate, formatFileSize } from "@/lib/format"
 import { canManageProperty } from "@/lib/permissions"
 import type { Tenant } from "@/lib/types"
 import { useAuth } from "@/providers/auth-provider"
@@ -92,6 +106,50 @@ export function TenantDetail({ tenantId }: { tenantId: string }) {
     onError: (error) =>
       toast.error(getErrorMessage(error, "Couldn't update the tenant status.")),
   })
+
+  const documents = useTenantDocuments(tenantId)
+  const vehicles = useTenantVehicles(tenantId)
+  const [docOpen, setDocOpen] = useState(false)
+  const [docCategory, setDocCategory] = useState<string>()
+  const [vehicleOpen, setVehicleOpen] = useState(false)
+  const [openingDoc, setOpeningDoc] = useState<string>()
+
+  const removeDocument = useMutation({
+    mutationFn: (id: string) => deleteTenantDocument(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      toast.success("Document deleted")
+    },
+    onError: (error) =>
+      toast.error(getErrorMessage(error, "Couldn't delete the document.")),
+  })
+
+  const removeVehicle = useMutation({
+    mutationFn: (id: string) => deleteTenantVehicle(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      toast.success("Vehicle removed")
+    },
+    onError: (error) =>
+      toast.error(getErrorMessage(error, "Couldn't remove the vehicle.")),
+  })
+
+  function openDoc(category?: string) {
+    setDocCategory(category)
+    setDocOpen(true)
+  }
+
+  async function openDocument(documentId: string) {
+    setOpeningDoc(documentId)
+    try {
+      const { url } = await fetchTenantDocumentUrl(documentId)
+      window.open(url, "_blank", "noopener,noreferrer")
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Couldn't open the document."))
+    } finally {
+      setOpeningDoc(undefined)
+    }
+  }
 
   if (query.isPending) {
     return (
@@ -301,7 +359,7 @@ export function TenantDetail({ tenantId }: { tenantId: string }) {
               <TabsTrigger value="lease" className="px-3">
                 Lease &amp; Deposits
               </TabsTrigger>
-              <TabsTrigger value="documents" className="px-3" disabled>
+              <TabsTrigger value="documents" className="px-3">
                 Documents
               </TabsTrigger>
             </TabsList>
@@ -342,6 +400,27 @@ export function TenantDetail({ tenantId }: { tenantId: string }) {
                   </p>
                 </div>
 
+                {canManage ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      className="h-9 rounded-full px-4"
+                      onClick={() => openDoc("ID/Passport")}
+                    >
+                      <UploadCloudIcon />
+                      Upload ID / Passport
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-9 rounded-full px-4"
+                      onClick={() => openDoc("Employer Letter")}
+                    >
+                      <UploadCloudIcon />
+                      Upload Employer Letter
+                    </Button>
+                  </div>
+                ) : null}
+
                 <div className="grid gap-4 border-t pt-4 sm:grid-cols-2">
                   <Field label="Mobile" value={tenant.mobile} />
                   <Field label="Alternative phone" value={tenant.phone} />
@@ -356,6 +435,80 @@ export function TenantDetail({ tenantId }: { tenantId: string }) {
                     }
                   />
                   <Field label="Consent recorded" value={tenant.consent ? "Yes" : "No"} />
+                </div>
+
+                <div className="border-t pt-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="flex items-center gap-2 font-heading text-base font-semibold">
+                      <CarIcon className="size-4 text-muted-foreground" />
+                      Vehicles
+                    </p>
+                    {canManage ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 rounded-full px-3"
+                        onClick={() => setVehicleOpen(true)}
+                      >
+                        <PlusIcon />
+                        Add Vehicle
+                      </Button>
+                    ) : null}
+                  </div>
+                  {vehicles.isPending ? (
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      Loading…
+                    </p>
+                  ) : vehicles.isError ? (
+                    <p className="mt-3 text-sm text-destructive">
+                      {getErrorMessage(
+                        vehicles.error,
+                        "Couldn't load the vehicles."
+                      )}
+                    </p>
+                  ) : (vehicles.data ?? []).length === 0 ? (
+                    <p className="mt-3 rounded-xl border border-dashed px-4 py-5 text-center text-sm text-muted-foreground">
+                      No vehicles registered for this tenant.
+                    </p>
+                  ) : (
+                    <ul className="mt-3 divide-y rounded-xl border">
+                      {(vehicles.data ?? []).map((vehicle) => (
+                        <li
+                          key={vehicle.vehicle_id}
+                          className="flex flex-wrap items-center justify-between gap-2 px-4 py-3"
+                        >
+                          <div>
+                            <p className="text-sm font-medium">
+                              {vehicle.make}
+                              {vehicle.model ? ` ${vehicle.model}` : ""}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {vehicle.registration_number}
+                              {vehicle.colour ? ` · ${vehicle.colour}` : ""}
+                            </p>
+                          </div>
+                          {canManage ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="rounded-full text-destructive"
+                              disabled={removeVehicle.isPending}
+                              onClick={() =>
+                                removeVehicle.mutate(vehicle.vehicle_id)
+                              }
+                            >
+                              {removeVehicle.isPending ? (
+                                <Loader2Icon className="animate-spin" />
+                              ) : (
+                                <Trash2Icon />
+                              )}
+                              Remove
+                            </Button>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </Card>
 
@@ -480,9 +633,115 @@ export function TenantDetail({ tenantId }: { tenantId: string }) {
               </div>
             )}
           </TabsContent>
+
+          <TabsContent value="documents" className="p-5">
+            <Card className="gap-0 rounded-2xl p-0">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4">
+                <div>
+                  <h2 className="font-heading text-lg font-semibold">
+                    Documents
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    ID/passport scans, employer letters, contracts and other
+                    files.
+                  </p>
+                </div>
+                {canManage ? (
+                  <Button
+                    className="h-9 rounded-full bg-emerald-800 px-4 text-white hover:bg-emerald-900"
+                    onClick={() => openDoc()}
+                  >
+                    <UploadCloudIcon />
+                    Upload document
+                  </Button>
+                ) : null}
+              </div>
+
+              {documents.isPending ? (
+                <Skeleton className="m-5 h-16 rounded-xl" />
+              ) : documents.isError ? (
+                <p className="px-5 py-8 text-sm text-destructive">
+                  {getErrorMessage(
+                    documents.error,
+                    "Couldn't load the documents."
+                  )}
+                </p>
+              ) : (documents.data ?? []).length === 0 ? (
+                <div className="flex flex-col items-center gap-2 px-5 py-12 text-center text-sm text-muted-foreground">
+                  <PaperclipIcon className="size-5 text-emerald-800" />
+                  No documents uploaded yet. Add ID/passport scans and employer
+                  letters here.
+                </div>
+              ) : (
+                <ul className="divide-y">
+                  {(documents.data ?? []).map((document) => (
+                    <li
+                      key={document.document_id}
+                      className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{document.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {document.category} · {formatDate(document.uploaded_at)}
+                          {document.file_size_bytes
+                            ? ` · ${formatFileSize(document.file_size_bytes)}`
+                            : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="rounded-full"
+                          disabled={openingDoc === document.document_id}
+                          onClick={() => openDocument(document.document_id)}
+                        >
+                          {openingDoc === document.document_id ? (
+                            <Loader2Icon className="animate-spin" />
+                          ) : (
+                            <ExternalLinkIcon />
+                          )}
+                          View
+                        </Button>
+                        {canManage ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-full text-destructive"
+                            disabled={removeDocument.isPending}
+                            onClick={() =>
+                              removeDocument.mutate(document.document_id)
+                            }
+                          >
+                            {removeDocument.isPending ? (
+                              <Loader2Icon className="animate-spin" />
+                            ) : (
+                              <Trash2Icon />
+                            )}
+                            Delete
+                          </Button>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </TabsContent>
         </Tabs>
       </Card>
 
+      <TenantDocumentDialog
+        open={docOpen}
+        onOpenChange={setDocOpen}
+        tenantId={tenantId}
+        defaultCategory={docCategory}
+      />
+      <TenantVehicleDialog
+        open={vehicleOpen}
+        onOpenChange={setVehicleOpen}
+        tenantId={tenantId}
+      />
       <TenantDialog
         open={editOpen}
         onOpenChange={setEditOpen}
