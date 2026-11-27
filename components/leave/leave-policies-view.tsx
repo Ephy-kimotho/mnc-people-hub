@@ -60,7 +60,7 @@ export function LeavePoliciesView() {
                 <div>
                   <p className="font-medium">{policy.leave_type}</p>
                   <p className="text-sm text-muted-foreground">
-                    {policy.description ?? "No description"}
+                    {policy.description || "No description"}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
