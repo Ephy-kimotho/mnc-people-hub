@@ -39,9 +39,37 @@ Notes on the import:
 - The property demo accounts, contacts, insurance, maintenance, payments, rent rows, alerts and demo lease document were deleted.
 - The import is recorded in **Audit Log → Property data imported**.
 
-The **People** dataset (8 staff, 10 leave requests, staff auth accounts) has not been replaced because Replit contains no staff or leave data.
-
 **Acceptance:** property register totals match Replit; no demo property rows remain.
+
+### 1.1b Replace demo People data with the Replit PeopleHub
+
+**Done on 27 November 2026.** The demo staff/leave dataset was removed and the Replit PeopleHub data was imported.
+
+| Imported from Replit PeopleHub | Count |
+| --- | ---: |
+| Staff | 6 |
+| Leave requests | 16 (14 approved, 1 recalled, 1 rejected) |
+| Work locations | 2 |
+| Emergency contacts | 5 |
+| Leave-balance rows (2026) | 24 |
+
+Details:
+
+- Staff profiles include national ID, NSSF, SHA, KRA PIN, SACCO, life-cover benefits and beneficiary details where Replit had them.
+- Work locations are **5199 Gardens** (1 staff) and **Manga Gardens House No 9** (5 staff).
+- The sick-leave policy was aligned to Replit’s **14 days**.
+- Demo staff, leave requests, balances, notifications and demo logins were deleted. **Only the `admin` auth account remains.**
+- The import is recorded in **Audit Log → People data imported**.
+
+Remaining gaps:
+
+- [ ] Create staff login accounts and set/reset passwords (imported staff currently have no auth accounts).
+- [ ] Add the missing national ID and next-of-kin details for Peter Kamau Kariuki.
+- [ ] Copy staff profile photos that Replit’s object path did not expose.
+- [ ] Add leave documents if any exist outside the Replit API.
+- [ ] Create a manager account if delegation is needed.
+
+**Acceptance:** staff and leave screens match the source; staff can sign in once accounts are created.
 
 ### 1.1a Complete the imported property data (P0)
 
@@ -74,12 +102,13 @@ Tasks:
 
 ### 1.2 Remove demo logins and rotate seeded passwords
 
-Eight demo staff auth accounts were auto-created with `must_change_password = true`; only Grace’s password is known. The seeded `admin` and `manager1` passwords are also known.
+The demo staff logins and `manager1` were removed during the People import. Only the `admin` account remains; its seeded password is still in use.
 
 Tasks:
 
-- [ ] Delete or deactivate demo auth accounts that do not belong to real staff.
-- [ ] Rotate `admin`, `manager1` and `grace.wanjiru` passwords.
+- [ ] Rotate the `admin` password.
+- [ ] Create login accounts for the six imported staff and any managers.
+- [ ] Set `must_change_password` for new accounts.
 - [ ] Audit all users with `must_change_password = true`.
 - [ ] Verify every active user has a unique, owner-set password.
 - [ ] Consider MFA for admin accounts.
@@ -237,6 +266,7 @@ Do not re-open these unless a regression is found:
 - **15 MB server-side upload limit** on all upload endpoints, with 413 responses.
 - **Audit log** populated across Staff, Leave, Property and Workspace changes, including old/new values and stable ordering.
 - **Property demo replaced with the Replit portfolio** — 20 properties, 38 units, 36 tenants, 36 active leases, 35 bank accounts, 20 owners and 8 insurance policies.
+- **People demo replaced with the Replit PeopleHub** — 6 staff, 16 leave requests, 2 locations and recomputed 2026 leave balances.
 - Leave edit `Decimal - float` crash fixed.
 
 ---
@@ -246,9 +276,9 @@ Do not re-open these unless a regression is found:
 Use this as the final release gate:
 
 - [x] Property demo replaced with the Replit import (27 Nov 2026).
+- [x] People demo replaced with the Replit PeopleHub import (27 Nov 2026).
 - [ ] Lease dates, rents, service charges, tenant contacts and bank account numbers completed.
-- [ ] People demo data replaced with the real HR source.
-- [ ] Demo accounts removed; admin/manager/demo passwords rotated.
+- [ ] Staff login accounts created; admin password rotated.
 - [ ] R2 bucket private; signed document access re-tested.
 - [ ] Database backup restored successfully in staging.
 - [ ] Uptime, error tracking and alerting active.
