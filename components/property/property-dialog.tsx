@@ -56,7 +56,7 @@ export function PropertyDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 p-0">
+      <DialogContent className="gap-0 overflow-x-hidden p-0">
         <DialogHeader className="gap-1 border-b px-6 py-5">
           <DialogTitle className="text-lg font-semibold">
             {property ? "Edit property details" : "Add property"}

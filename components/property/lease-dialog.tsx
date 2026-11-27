@@ -47,7 +47,7 @@ export function LeaseDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl gap-0 p-0">
+      <DialogContent className="max-w-xl gap-0 overflow-x-hidden p-0">
         <DialogHeader className="gap-1 border-b px-6 py-5">
           <DialogTitle className="text-lg font-semibold">
             {lease ? "Edit lease" : "Draft lease"}
