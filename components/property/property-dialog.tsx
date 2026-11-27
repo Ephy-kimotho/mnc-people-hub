@@ -36,7 +36,14 @@ const labelClass =
 const propertyTypes = ["Residential", "Commercial", "Industrial", "Mixed"]
 const tenures = ["Freehold", "Leasehold"]
 const sizeUnits = ["acres", "hectares", "square feet", "square metres"]
-const statuses = ["Active", "Inactive", "Sold"]
+const statuses = [
+  "Active",
+  "For Sale",
+  "Under Consideration",
+  "Sold",
+  "Inactive",
+]
+const complianceStatuses = ["Unknown", "Paid", "In Arrears", "Exempt"]
 
 export function PropertyDialog({
   open,
@@ -90,9 +97,11 @@ function PropertyForm({
       size_unit: property?.size_unit ?? "acres",
       tenure: property?.tenure ?? "Freehold",
       status: property?.status ?? "Active",
-      latitude: undefined,
-      longitude: undefined,
-      google_maps_url: "",
+      land_rent_status: property?.land_rent_status ?? "Unknown",
+      rates_status: property?.rates_status ?? "Unknown",
+      latitude: property?.latitude ?? undefined,
+      longitude: property?.longitude ?? undefined,
+      google_maps_url: property?.google_maps_url ?? "",
       lease_expiry: property?.lease_expiry ?? "",
       deposit_target_months: property?.deposit_target_months ?? 2,
       notes: property?.notes ?? "",
@@ -234,6 +243,9 @@ function PropertyForm({
                 </option>
               ))}
             </select>
+            <p className="text-xs text-muted-foreground">
+              Occupied properties are shown as Let.
+            </p>
           </div>
         </div>
 
@@ -333,6 +345,41 @@ function PropertyForm({
             <FieldError>
               {form.formState.errors.deposit_target_months?.message}
             </FieldError>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-2">
+            <FieldLabel htmlFor="property-land-rent" className={labelClass}>
+              Land rent status
+            </FieldLabel>
+            <select
+              id="property-land-rent"
+              className={inputClass}
+              {...form.register("land_rent_status")}
+            >
+              {complianceStatuses.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2">
+            <FieldLabel htmlFor="property-rates" className={labelClass}>
+              County rates status
+            </FieldLabel>
+            <select
+              id="property-rates"
+              className={inputClass}
+              {...form.register("rates_status")}
+            >
+              {complianceStatuses.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

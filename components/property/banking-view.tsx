@@ -25,6 +25,13 @@ import { canManageProperty } from "@/lib/permissions"
 import type { BankAccount, RentCollection } from "@/lib/types"
 import { useAuth } from "@/providers/auth-provider"
 
+function maskAccount(number: string | null) {
+  if (!number) return "—"
+  const digits = number.replace(/\s+/g, "")
+  if (digits.length <= 4) return digits
+  return `•••• ${digits.slice(-4)}`
+}
+
 export function BankingView() {
   const { user } = useAuth()
   const canManage = canManageProperty(user)
@@ -79,56 +86,86 @@ export function BankingView() {
             No bank accounts yet.
           </div>
         ) : (
-          <ul className="divide-y">
+          <div className="grid gap-3 p-4 sm:grid-cols-2">
             {(accounts.data ?? []).map((account) => (
-              <li
+              <div
                 key={account.account_id}
-                className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
+                className="rounded-xl border px-4 py-3"
               >
-                <div>
-                  <p className="font-medium">
-                    {account.bank_name}{" "}
-                    <span className="font-normal text-muted-foreground">
-                      · {account.account_name}
-                    </span>
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {[account.branch, account.account_number]
-                      .filter(Boolean)
-                      .join(" · ") || "No branch or number"}
-                  </p>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{account.bank_name}</p>
+                    <p className="truncate text-sm text-muted-foreground">
+                      {account.account_name}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Badge variant="outline">{account.currency}</Badge>
+                    {canManage ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="rounded-full"
+                          >
+                            <EllipsisVerticalIcon />
+                            <span className="sr-only">Account actions</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem
+                            onSelect={() => open("bank", account)}
+                          >
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onSelect={() => open("delete", account)}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{account.currency}</Badge>
-                  {canManage ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          className="rounded-full"
-                        >
-                          <EllipsisVerticalIcon />
-                          <span className="sr-only">Account actions</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onSelect={() => open("bank", account)}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onSelect={() => open("delete", account)}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : null}
-                </div>
-              </li>
+
+                <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <dt className="text-[0.6rem] font-semibold tracking-wide text-muted-foreground uppercase">
+                      Account
+                    </dt>
+                    <dd>{maskAccount(account.account_number)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[0.6rem] font-semibold tracking-wide text-muted-foreground uppercase">
+                      Branch
+                    </dt>
+                    <dd>{account.branch || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[0.6rem] font-semibold tracking-wide text-muted-foreground uppercase">
+                      Manager
+                    </dt>
+                    <dd>{account.relationship_manager || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[0.6rem] font-semibold tracking-wide text-muted-foreground uppercase">
+                      Contact
+                    </dt>
+                    <dd className="truncate">{account.contact || "—"}</dd>
+                  </div>
+                </dl>
+
+                <p className="mt-3 border-t pt-2 text-xs text-muted-foreground">
+                  {account.assigned_leases ?? 0}{" "}
+                  {(account.assigned_leases ?? 0) === 1 ? "lease" : "leases"}{" "}
+                  assigned
+                </p>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </Card>
 

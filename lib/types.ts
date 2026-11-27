@@ -409,6 +409,7 @@ export type BankAccount = {
   relationship_manager: string | null
   contact: string | null
   is_active: boolean
+  assigned_leases?: number
 }
 
 export type Reminder = {

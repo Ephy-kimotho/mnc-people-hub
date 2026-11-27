@@ -26,6 +26,8 @@ export const propertySchema = z.object({
   size_unit: z.string().optional(),
   tenure: z.string().optional(),
   status: z.string().min(1),
+  land_rent_status: optionalText,
+  rates_status: optionalText,
   latitude: optionalNumber,
   longitude: optionalNumber,
   google_maps_url: optionalText,

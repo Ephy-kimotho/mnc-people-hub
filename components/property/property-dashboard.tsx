@@ -6,7 +6,6 @@ import {
   FileTextIcon,
   PercentIcon,
   ShieldIcon,
-  TriangleAlertIcon,
 } from "lucide-react"
 import { useState } from "react"
 import { format } from "date-fns"
@@ -164,12 +163,6 @@ export function PropertyDashboard() {
               label="Monthly service charge"
               value={formatCurrency(data.service_charge_kes)}
               note="Configured monthly charges on tenant leases, including active leases starting soon."
-            />
-            <Stat
-              icon={TriangleAlertIcon}
-              label="Deposit shortfalls"
-              value={String(data.deposit_alerts.length)}
-              note="Active leases below their deposit target."
             />
           </div>
 

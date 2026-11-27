@@ -18,12 +18,17 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { LeaseDialog } from "@/components/property/lease-dialog"
 import { RentPaymentDialog } from "@/components/property/rent-payment-dialog"
-import { useDepositTopups, useRentCollection } from "@/hooks/use-properties"
+import {
+  useDepositTopups,
+  useLeases,
+  useRentCollection,
+} from "@/hooks/use-properties"
 import { getErrorMessage } from "@/lib/api/errors"
 import { formatCurrency } from "@/lib/format"
 import { canManageProperty } from "@/lib/permissions"
-import type { DepositTopup, RentCollection } from "@/lib/types"
+import type { DepositTopup, Lease, RentCollection } from "@/lib/types"
 import { useAuth } from "@/providers/auth-provider"
 
 function periodKey(date: Date) {
@@ -37,7 +42,9 @@ export function RemindersView() {
   const period = periodKey(month)
   const rent = useRentCollection(period)
   const deposits = useDepositTopups()
+  const leases = useLeases({})
   const [paying, setPaying] = useState<RentCollection>()
+  const [editingLease, setEditingLease] = useState<Lease>()
 
   const rentRows = rent.data ?? []
   const rentTotal = rentRows.reduce(
@@ -203,12 +210,18 @@ export function RemindersView() {
                           </td>
                           <td className="px-5 py-3 text-right">
                             {unconfigured ? (
-                              <Link
-                                href="/property/leases"
+                              <button
+                                type="button"
                                 className="text-sm italic text-muted-foreground hover:text-foreground hover:underline"
+                                onClick={() => {
+                                  const lease = leases.data?.find(
+                                    (item) => item.lease_id === row.lease_id
+                                  )
+                                  if (lease) setEditingLease(lease)
+                                }}
                               >
                                 Configure rent
-                              </Link>
+                              </button>
                             ) : canManage ? (
                               <Button
                                 variant="ghost"
@@ -274,6 +287,11 @@ export function RemindersView() {
         onOpenChange={(next) => !next && setPaying(undefined)}
         row={paying}
         period={period}
+      />
+      <LeaseDialog
+        open={Boolean(editingLease)}
+        onOpenChange={(next) => !next && setEditingLease(undefined)}
+        lease={editingLease}
       />
     </div>
   )

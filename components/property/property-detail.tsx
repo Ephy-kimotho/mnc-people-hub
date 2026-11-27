@@ -12,6 +12,7 @@ import {
   LandmarkIcon,
   Loader2Icon,
   MapPinIcon,
+  PenLineIcon,
   PercentIcon,
   PlusIcon,
   WrenchIcon,
@@ -64,19 +65,56 @@ import {
   deleteMaintenance,
   propertyKeys,
   resolveMaintenance,
+  updateProperty,
 } from "@/lib/api/properties"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { canManageProperty } from "@/lib/permissions"
 import type { Lease, Maintenance, Property, PropertyUnit, RentCollection } from "@/lib/types"
 import { useAuth } from "@/providers/auth-provider"
 
+function propertyStatus(property: Property) {
+  if (property.status === "Sold") return "Sold"
+  if (property.status === "For Sale") return "For Sale"
+  if (property.status === "Under Consideration") return "Under Consideration"
+  if (property.status === "Inactive") return "Inactive"
+  return (property.occupied_count ?? 0) > 0 ? "Let" : "Active"
+}
+
+const statusTones: Record<string, string> = {
+  Let: "border-emerald-700/30 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200",
+  Active:
+    "border-emerald-700/30 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200",
+  "For Sale":
+    "border-sky-600/30 bg-sky-50 text-sky-900 dark:bg-sky-950/40 dark:text-sky-200",
+  "Under Consideration":
+    "border-amber-600/30 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200",
+  Sold: "border-border bg-muted text-muted-foreground",
+  Inactive: "border-border bg-muted text-muted-foreground",
+}
+
 export function PropertyDetail({ propertyId }: { propertyId: string }) {
   const router = useRouter()
   const { user } = useAuth()
   const canManage = canManageProperty(user)
+  const isAdmin = user?.role === "admin"
   const property = useProperty(propertyId)
   const units = useUnits(propertyId)
   const leases = useLeases({ property_id: propertyId })
+  const queryClient = useQueryClient()
+
+  const archive = useMutation({
+    mutationFn: (status: string) => updateProperty(propertyId, { status }),
+    onSuccess: (_data, status) => {
+      void queryClient.invalidateQueries({ queryKey: propertyKeys.all })
+      toast.success(
+        status === "Inactive" ? "Property archived" : "Property reactivated"
+      )
+    },
+    onError: (error) =>
+      toast.error(
+        getErrorMessage(error, "Couldn't update the property status.")
+      ),
+  })
 
   const [dialog, setDialog] = useState<
     "property" | "delete" | "unit" | "lease" | null
@@ -113,13 +151,9 @@ export function PropertyDetail({ propertyId }: { propertyId: string }) {
   const occupied = data.occupied_count ?? 0
   const total = data.unit_count ?? 0
   const occupancyPct = total ? Math.round((occupied / total) * 100) : 0
-  const status = occupied > 0 ? "Let" : data.status
-  const statusTone =
-    status === "Let"
-      ? "border-emerald-700/30 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
-      : status === "Sold"
-        ? "border-border bg-muted text-muted-foreground"
-        : "border-amber-600/30 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+  const status = propertyStatus(data)
+  const statusTone = statusTones[status] ?? statusTones.Active
+  const archived = data.status === "Inactive"
 
   return (
     <div className="space-y-8">
@@ -137,7 +171,7 @@ export function PropertyDetail({ propertyId }: { propertyId: string }) {
         description={[data.location, data.county].filter(Boolean).join(" · ")}
         action={
           canManage && (
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 className="h-10 rounded-full px-5"
@@ -146,12 +180,38 @@ export function PropertyDetail({ propertyId }: { propertyId: string }) {
                 Edit property
               </Button>
               <Button
-                variant="destructive"
+                variant={archived ? "outline" : "destructive"}
                 className="h-10 rounded-full px-5"
-                onClick={() => setDialog("delete")}
+                disabled={archive.isPending}
+                onClick={() =>
+                  archive.mutate(archived ? "Active" : "Inactive")
+                }
               >
-                Delete
+                {archive.isPending && <Loader2Icon className="animate-spin" />}
+                {archived ? "Reactivate" : "Archive"}
               </Button>
+              {isAdmin ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full"
+                    >
+                      <EllipsisVerticalIcon />
+                      <span className="sr-only">More property actions</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={() => setDialog("delete")}
+                    >
+                      Delete property
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
             </div>
           )
         }
@@ -165,22 +225,23 @@ export function PropertyDetail({ propertyId }: { propertyId: string }) {
         <Badge variant="outline">{data.completeness}% complete</Badge>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={LandmarkIcon}
           label="Title number"
           value={data.title_number || "—"}
-        />
-        <StatCard
-          icon={FileTextIcon}
-          label="Title deed name"
-          value={data.title_deed_name || "—"}
+          note={
+            data.title_deed_name
+              ? `Deed: ${data.title_deed_name}`
+              : "Deed name not recorded"
+          }
         />
         <StatCard
           icon={DoorOpenIcon}
           label="Occupancy"
-          value={`${occupied} / ${total}`}
-          note={`${occupancyPct}% occupied`}
+          value={`${occupancyPct}%`}
+          note={`${occupied} of ${total} units occupied`}
+          progress={occupancyPct}
         />
         <StatCard
           icon={CalendarDaysIcon}
@@ -218,52 +279,99 @@ export function PropertyDetail({ propertyId }: { propertyId: string }) {
           </div>
 
           <TabsContent value="details" className="p-5">
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-              <Card className="gap-4 rounded-2xl p-6">
-                <h2 className="font-heading text-lg font-semibold">
-                  Details &amp; compliance
-                </h2>
-                <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <Detail label="Title number" value={data.title_number} />
-                  <Detail label="Title deed name" value={data.title_deed_name} />
-                  <Detail
-                    label="Size"
-                    value={
-                      data.size
-                        ? `${data.size} ${data.size_unit ?? ""}`.trim()
-                        : null
-                    }
-                  />
-                  <Detail
-                    label="Lease expiry"
-                    value={
-                      data.lease_expiry ? formatDate(data.lease_expiry) : null
-                    }
-                  />
-                  <Detail
-                    label="Deposit target"
-                    value={`${data.deposit_target_months} month(s)`}
-                  />
-                  <Detail label="Tenure" value={data.tenure} />
-                  <Detail label="Land rent" value={data.land_rent_status} />
-                  <Detail label="Rates" value={data.rates_status} />
-                  <Detail
-                    label="Deposits held"
-                    value={formatCurrency(data.deposits_kes ?? 0)}
-                  />
-                  <Detail
-                    label="Service charge"
-                    value={formatCurrency(data.service_charge_kes ?? 0)}
-                  />
-                </dl>
-                {data.notes ? (
-                  <p className="border-t pt-4 text-sm text-muted-foreground">
-                    {data.notes}
-                  </p>
-                ) : null}
-              </Card>
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+              <div className="space-y-4">
+                <Card className="gap-4 rounded-2xl p-6">
+                  <h2 className="font-heading text-lg font-semibold">
+                    Property information
+                  </h2>
+                  <dl className="grid gap-4 sm:grid-cols-2">
+                    <Detail label="Tenure" value={data.tenure} />
+                    <Detail
+                      label="Size"
+                      value={
+                        data.size
+                          ? `${data.size} ${data.size_unit ?? ""}`.trim()
+                          : null
+                      }
+                    />
+                    <Detail
+                      label="Lease expiry"
+                      value={
+                        data.lease_expiry
+                          ? formatDate(data.lease_expiry)
+                          : null
+                      }
+                    />
+                    <div>
+                      <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        Deposit target
+                      </dt>
+                      <dd className="mt-1 flex items-center gap-2 text-sm font-medium">
+                        {data.deposit_target_months} month(s)
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 rounded-full px-2"
+                          onClick={() => setDialog("property")}
+                        >
+                          <PenLineIcon />
+                          Edit
+                        </Button>
+                      </dd>
+                    </div>
+                  </dl>
+                  <dl className="grid gap-4 border-t pt-4 sm:grid-cols-3">
+                    <Detail
+                      label="Deposits held"
+                      value={formatCurrency(data.deposits_kes ?? 0)}
+                    />
+                    <Detail
+                      label="Service charge"
+                      value={formatCurrency(data.service_charge_kes ?? 0)}
+                    />
+                    <Detail
+                      label="Monthly rent"
+                      value={formatCurrency(data.monthly_rent_kes ?? 0)}
+                    />
+                  </dl>
+                </Card>
 
-              <LocationCard property={data} />
+                <Card className="gap-4 rounded-2xl p-6">
+                  <h2 className="font-heading text-lg font-semibold">
+                    Compliance &amp; status
+                  </h2>
+                  <dl className="grid gap-4 sm:grid-cols-2">
+                    <Detail
+                      label="Land rent"
+                      value={data.land_rent_status || "Unknown"}
+                    />
+                    <Detail
+                      label="County rates"
+                      value={data.rates_status || "Unknown"}
+                    />
+                  </dl>
+                  <p className="text-xs text-muted-foreground">
+                    Update these from Edit property.
+                  </p>
+                </Card>
+
+                {data.notes ? (
+                  <Card className="gap-2 rounded-2xl p-6">
+                    <h2 className="font-heading text-lg font-semibold">
+                      Internal notes
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      {data.notes}
+                    </p>
+                  </Card>
+                ) : null}
+              </div>
+
+              <LocationCard
+                property={data}
+                onEdit={() => setDialog("property")}
+              />
             </div>
           </TabsContent>
 
@@ -384,7 +492,13 @@ function StatCard({
   )
 }
 
-function LocationCard({ property }: { property: Property }) {
+function LocationCard({
+  property,
+  onEdit,
+}: {
+  property: Property
+  onEdit: () => void
+}) {
   const mapsUrl =
     property.google_maps_url ||
     (property.latitude != null && property.longitude != null
@@ -396,30 +510,53 @@ function LocationCard({ property }: { property: Property }) {
       : null
 
   return (
-    <Card className="gap-3 rounded-2xl p-6">
-      <div className="flex items-center gap-2">
-        <MapPinIcon className="size-4 text-emerald-800" />
-        <h2 className="font-heading text-lg font-semibold">Location</h2>
-      </div>
-      <p className="text-sm">
-        {[property.location, property.county].filter(Boolean).join(", ") ||
-          "No location set"}
-      </p>
-      {coordinates ? (
-        <p className="text-xs text-muted-foreground">{coordinates}</p>
-      ) : null}
-      {mapsUrl ? (
+    <Card className="gap-0 self-start rounded-2xl p-0">
+      <div className="flex items-center justify-between gap-2 border-b px-6 py-4">
+        <div className="flex items-center gap-2">
+          <MapPinIcon className="size-4 text-emerald-800" />
+          <h2 className="font-heading text-lg font-semibold">Location</h2>
+        </div>
         <Button
-          asChild
           variant="outline"
-          className="mt-1 h-10 rounded-full px-5"
+          size="sm"
+          className="h-8 rounded-full px-3"
+          onClick={onEdit}
         >
-          <a href={mapsUrl} target="_blank" rel="noreferrer">
-            <ExternalLinkIcon />
-            Open in Google Maps
-          </a>
+          <PenLineIcon />
+          Edit
         </Button>
-      ) : null}
+      </div>
+      <div className="px-6 py-5">
+        <p className="text-sm">
+          {[property.location, property.county].filter(Boolean).join(", ") ||
+            "No location set"}
+        </p>
+        {coordinates ? (
+          <p className="mt-1 text-xs text-muted-foreground">{coordinates}</p>
+        ) : (
+          <div className="mt-4 rounded-xl border border-dashed px-4 py-5 text-center">
+            <MapPinIcon className="mx-auto size-5 text-muted-foreground" />
+            <p className="mt-2 text-sm font-medium">
+              Exact map pin not added yet
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Add latitude and longitude to show this property on the map.
+            </p>
+          </div>
+        )}
+        {mapsUrl ? (
+          <Button
+            asChild
+            variant="outline"
+            className="mt-4 h-10 rounded-full px-5"
+          >
+            <a href={mapsUrl} target="_blank" rel="noreferrer">
+              <ExternalLinkIcon />
+              Open in Google Maps
+            </a>
+          </Button>
+        ) : null}
+      </div>
     </Card>
   )
 }

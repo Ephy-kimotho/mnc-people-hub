@@ -32,7 +32,44 @@ import { canManageProperty } from "@/lib/permissions"
 import type { Property } from "@/lib/types"
 import { useAuth } from "@/providers/auth-provider"
 
-const statusFilters = ["all", "Active", "Inactive", "Sold"] as const
+const statusFilters = [
+  "all",
+  "Let",
+  "For Sale",
+  "Under Consideration",
+  "Sold",
+  "Inactive",
+  "Active",
+] as const
+
+function displayStatus(property: Property) {
+  if (property.status === "Sold") return "Sold"
+  if (property.status === "For Sale") return "For Sale"
+  if (property.status === "Under Consideration") return "Under Consideration"
+  if (property.status === "Inactive") return "Inactive"
+  return (property.occupied_count ?? 0) > 0 ? "Let" : "Active"
+}
+
+const statusPill: Record<string, string> = {
+  Let: "border-emerald-700/30 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200",
+  Active:
+    "border-emerald-700/30 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200",
+  "For Sale":
+    "border-sky-600/30 bg-sky-50 text-sky-900 dark:bg-sky-950/40 dark:text-sky-200",
+  "Under Consideration":
+    "border-amber-600/30 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200",
+  Sold: "border-border bg-muted text-muted-foreground",
+  Inactive: "border-border bg-muted text-muted-foreground",
+}
+
+const statusBar: Record<string, string> = {
+  Let: "bg-emerald-800",
+  Active: "bg-emerald-600",
+  "For Sale": "bg-sky-600",
+  "Under Consideration": "bg-amber-500",
+  Sold: "bg-muted-foreground/40",
+  Inactive: "bg-amber-500",
+}
 
 export function PropertiesView() {
   const { user } = useAuth()
@@ -57,7 +94,8 @@ export function PropertiesView() {
         .join(" ")
         .toLowerCase()
         .includes(term)
-    const matchesStatus = status === "all" || property.status === status
+    const matchesStatus =
+      status === "all" || displayStatus(property) === status
     return matchesSearch && matchesStatus
   })
 
@@ -174,20 +212,12 @@ function PropertyCard({
   const occupied = property.occupied_count ?? 0
   const total = property.unit_count ?? 0
   const pct = total ? Math.round((occupied / total) * 100) : 0
-  const status = occupied > 0 ? "Let" : property.status
+  const status = displayStatus(property)
   const missingCharges = property.tenants_without_service_charge ?? 0
 
   return (
     <Card className="gap-0 overflow-hidden rounded-2xl p-0 shadow-xs">
-      <div
-        className={
-          status === "Let"
-            ? "h-1 w-full bg-emerald-800"
-            : status === "Sold"
-              ? "h-1 w-full bg-muted-foreground/40"
-              : "h-1 w-full bg-amber-500"
-        }
-      />
+      <div className={`h-1 w-full ${statusBar[status] ?? "bg-amber-500"}`} />
       <div className="space-y-4 p-5">
         <div className="flex items-start justify-between gap-2">
           <Link
@@ -199,7 +229,7 @@ function PropertyCard({
           <div className="flex shrink-0 items-center gap-1">
             <Badge
               variant="outline"
-              className="rounded-full border-emerald-700/30 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
+              className={`rounded-full ${statusPill[status] ?? ""}`}
             >
               {status}
             </Badge>

@@ -172,11 +172,13 @@ function LeaseForm({ lease, onDone }: { lease?: Lease; onDone: () => void }) {
               <option value="">
                 {propertyId ? "Select unit" : "Select property first"}
               </option>
-              {(units.data ?? []).map((unit) => (
-                <option key={unit.unit_id} value={unit.unit_id}>
-                  {unit.label}
-                </option>
-              ))}
+              {(units.data ?? [])
+                .filter((unit) => lease || unit.status === "Vacant")
+                .map((unit) => (
+                  <option key={unit.unit_id} value={unit.unit_id}>
+                    {unit.label}
+                  </option>
+                ))}
             </select>
           </div>
           <div className="grid gap-2">
