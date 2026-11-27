@@ -86,7 +86,8 @@ function leavePayload(values: LeaveRequestValues) {
       durationType === "full_day" ? undefined : `${values.startTime}:00`,
     end_time:
       durationType === "full_day" ? undefined : `${values.endTime}:00`,
-    reason: values.reason || undefined,
+    // An explicit null clears a reason when editing
+    reason: values.reason || null,
   }
 }
 
